@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS wallet_user, wallet, transaction_data, transaction_status;
