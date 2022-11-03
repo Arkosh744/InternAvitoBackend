@@ -33,6 +33,9 @@ func Run() error {
 	}
 	defer db.Close()
 
+	//userRepo := repository.NewUsers(db)
+	//userService := service.NewUserService(usersRepo)
+
 	handler := rest.NewHandler(nil)
 
 	srv := &http.Server{
