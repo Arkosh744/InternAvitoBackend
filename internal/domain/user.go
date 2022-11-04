@@ -15,11 +15,18 @@ type WalletUser struct {
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 
-type WebWalletUser struct {
-	FirstName string    `json:"firstName" validate:"required,gte=2"`
-	LastName  string    `json:"lastName" validate:"required,gte=2"`
-	Email     string    `json:"email" validate:"required,email"`
-	Wallet    WebWallet `json:"wallet"`
+type WebtUser struct {
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
+	Email     string `json:"email"`
+}
+
+type WebUserWalletBalance struct {
+	FirstName string  `json:"firstName"`
+	LastName  string  `json:"lastName"`
+	Email     string  `json:"email"`
+	Balance   float64 `json:"balance"`
+	Reserved  float64 `json:"reserved"`
 }
 
 type Wallet struct {
@@ -31,20 +38,20 @@ type Wallet struct {
 	UpdatedAt    time.Time     `json:"updatedAt"`
 }
 
-type WebWallet struct {
-	Balance  float64 `json:"balance"`
-	Reserved float64 `json:"reserved"`
-}
-
-func (WalletUser *WalletUser) ToWeb() *WebWalletUser {
-	return &WebWalletUser{
+func (WalletUser *WalletUser) ToWebUser() *WebtUser {
+	return &WebtUser{
 		FirstName: WalletUser.FirstName,
 		LastName:  WalletUser.LastName,
 		Email:     WalletUser.Email,
-		Wallet: WebWallet{
-			Balance:  WalletUser.Wallet.Balance,
-			Reserved: WalletUser.Wallet.Reserved,
-		},
+	}
+}
+func (WalletUser *WalletUser) ToWebWalletUser() *WebUserWalletBalance {
+	return &WebUserWalletBalance{
+		FirstName: WalletUser.FirstName,
+		LastName:  WalletUser.LastName,
+		Email:     WalletUser.Email,
+		Balance:   WalletUser.Wallet.Balance,
+		Reserved:  WalletUser.Wallet.Reserved,
 	}
 }
 

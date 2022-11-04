@@ -15,17 +15,16 @@ func NewUsers(db *sql.DB) *Users {
 	return &Users{db}
 }
 
-func (r *Users) Create(ctx context.Context, user domain.WalletUser) (domain.WalletUser, error) {
-	err := r.db.QueryRowContext(ctx,
-		"INSERT INTO wallet (balance) values (0) returning id, created_at, updated_at").
-		Scan(&user.Wallet.Id, &user.Wallet.CreatedAt, &user.Wallet.UpdatedAt)
-	if err != nil {
-		return user, err
-	}
-	err = r.db.QueryRowContext(ctx,
-		"INSERT INTO wallet_user (first_name, last_name, email, wallet) values ($1, $2, $3, $4) "+
-			"returning id, created_at, updated_at",
-		user.FirstName, user.LastName, user.Email, user.Wallet.Id).Scan(&user.Id, &user.CreatedAt, &user.UpdatedAt)
+func (u *Users) Create(ctx context.Context, user domain.WalletUser) (domain.WalletUser, error) {
+	//err := u.db.QueryRowContext(ctx,
+	//	"INSERT INTO wallet (balance) values (0) returning id, created_at, updated_at").
+	//	Scan(&user.Wallet.Id, &user.Wallet.CreatedAt, &user.Wallet.UpdatedAt)
+	//if err != nil {
+	//	return user, err
+	//}
+	err := u.db.QueryRowContext(ctx,
+		"INSERT INTO wallet_user (first_name, last_name, email) values ($1, $2, $3) returning id",
+		user.FirstName, user.LastName, user.Email).Scan(&user.Id)
 	return user, err
 }
 

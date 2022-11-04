@@ -81,25 +81,25 @@ func (h *Handler) Create(ctx echo.Context) error {
 		}
 	}
 
-	return ctx.JSON(http.StatusCreated, createdUser.ToWeb())
+	return ctx.JSON(http.StatusCreated, createdUser.ToWebUser())
 }
 
-func (h *Handler) List(c echo.Context) error {
+func (h *Handler) List(ctx echo.Context) error {
 
 	return nil
 }
 
-func (h *Handler) Get(c echo.Context) error {
+func (h *Handler) Get(ctx echo.Context) error {
 
 	return nil
 }
 
-func (h *Handler) Update(c echo.Context) error {
+func (h *Handler) Update(ctx echo.Context) error {
 
 	return nil
 }
 
-func (h *Handler) Delete(c echo.Context) error {
+func (h *Handler) Delete(ctx echo.Context) error {
 
 	return nil
 }

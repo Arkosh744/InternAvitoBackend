@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS wallet_user
     first_name varchar(255)     NOT NULL,
     last_name  varchar(255)     NOT NULL,
     email      varchar(255)     NOT NULL UNIQUE,
-    wallet     uuid             NOT NULL,
+    wallet     uuid             DEFAULT NULL,
     created_at timestamp        NOT NULL DEFAULT NOW(),
     updated_at timestamp        NOT NULL DEFAULT NOW()
 );
@@ -12,8 +12,8 @@ CREATE TABLE IF NOT EXISTS wallet_user
 CREATE TABLE IF NOT EXISTS wallet
 (
     id         uuid PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
-    balance    decimal(10, 2)   NOT NULL DEFAULT 0,
-    reserved   decimal(10, 2)   NOT NULL DEFAULT 0,
+    balance    numeric          NULL DEFAULT NULL,
+    reserved   numeric          NULL DEFAULT NULL,
     created_at timestamp        NOT NULL DEFAULT NOW(),
     updated_at timestamp        NOT NULL DEFAULT NOW()
 );
@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS transaction_data
     wallet_id  uuid             NOT NULL,
     amount     decimal(10, 2)   NOT NULL,
     status     serial           NOT NULL,
-    commentary text             DEFAULT NULL,
+    commentary text                      DEFAULT NULL,
     created_at timestamp        NOT NULL DEFAULT NOW(),
     updated_at timestamp        NOT NULL DEFAULT NOW()
 );
