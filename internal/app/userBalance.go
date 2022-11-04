@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/Arkosh744/InternAvitoBackend/internal/config"
+	"github.com/Arkosh744/InternAvitoBackend/internal/repository"
+	"github.com/Arkosh744/InternAvitoBackend/internal/service"
 	"github.com/Arkosh744/InternAvitoBackend/internal/transport/rest"
 	"github.com/Arkosh744/InternAvitoBackend/pkg/database"
 	_ "github.com/lib/pq"
@@ -33,10 +35,9 @@ func Run() error {
 	}
 	defer db.Close()
 
-	//userRepo := repository.NewUsers(db)
-	//userService := service.NewUserService(usersRepo)
-
-	handler := rest.NewHandler(nil)
+	usersRepo := repository.NewUsers(db)
+	userService := service.NewUsersService(usersRepo)
+	handler := rest.NewHandler(userService)
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.SrvPort,
@@ -57,13 +58,13 @@ func Run() error {
 	<-quit
 
 	log.Println("Shutdown Server ...")
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
 		return err
 	}
 
-	log.Println("timeout of 5 seconds.")
+	log.Println("timeout of 1 seconds.")
 	<-ctx.Done()
 	log.Println("Server exiting")
 	return nil

@@ -1,33 +1,33 @@
 CREATE TABLE IF NOT EXISTS wallet_user
 (
-    id         uuid PRIMARY KEY      DEFAULT gen_random_uuid() NOT NULL,
-    first_name varchar(255) NOT NULL,
-    last_name  varchar(255) NOT NULL,
-    email      varchar(255) NOT NULL,
-    wallet     uuid         NOT NULL,
-    created_at timestamp    NOT NULL DEFAULT NOW(),
-    updated_at timestamp    NOT NULL DEFAULT NOW()
+    id         uuid PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
+    first_name varchar(255)     NOT NULL,
+    last_name  varchar(255)     NOT NULL,
+    email      varchar(255)     NOT NULL UNIQUE,
+    wallet     uuid             NOT NULL,
+    created_at timestamp        NOT NULL DEFAULT NOW(),
+    updated_at timestamp        NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS wallet
 (
-    id           uuid PRIMARY KEY NOT NULL,
-    balance      decimal(10, 2)   NOT NULL,
-    reserved     decimal(10, 2)   NOT NULL,
-    created_at   timestamp        NOT NULL DEFAULT NOW(),
-    updated_at   timestamp        NOT NULL DEFAULT NOW()
+    id         uuid PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
+    balance    decimal(10, 2)   NOT NULL DEFAULT 0,
+    reserved   decimal(10, 2)   NOT NULL DEFAULT 0,
+    created_at timestamp        NOT NULL DEFAULT NOW(),
+    updated_at timestamp        NOT NULL DEFAULT NOW()
 );
 
 
 CREATE TABLE IF NOT EXISTS transaction_data
 (
-    id         uuid PRIMARY KEY        DEFAULT gen_random_uuid() NOT NULL,
-    wallet_id  uuid           NOT NULL,
-    amount     decimal(10, 2) NOT NULL,
-    status     serial   NOT NULL,
-    commentary text           NOT NULL,
-    created_at timestamp      NOT NULL DEFAULT NOW(),
-    updated_at timestamp      NOT NULL DEFAULT NOW()
+    id         uuid PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
+    wallet_id  uuid             NOT NULL,
+    amount     decimal(10, 2)   NOT NULL,
+    status     serial           NOT NULL,
+    commentary text             DEFAULT NULL,
+    created_at timestamp        NOT NULL DEFAULT NOW(),
+    updated_at timestamp        NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS transaction_status

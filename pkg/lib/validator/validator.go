@@ -2,9 +2,8 @@ package validator
 
 import (
 	"errors"
-	"strings"
-
 	validator "github.com/go-playground/validator/v10"
+	"strings"
 )
 
 // Validator wraps the go playground validator for the echo framework interface.
