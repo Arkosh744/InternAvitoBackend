@@ -23,6 +23,7 @@ type Users interface {
 	CheckWalletByEmail(ctx context.Context, user string) (domain.User, error)
 	CreateWallet(ctx context.Context, input wallet.InputDeposit) (domain.User, error)
 	DepositWallet(ctx context.Context, input wallet.InputDeposit) (domain.User, error)
+	CheckAndDoTransfer(ctx context.Context, input wallet.InputTransferUsers) (domain.User, error)
 }
 
 type Handler struct {
@@ -48,8 +49,10 @@ func (h *Handler) InitRouter() *echo.Echo {
 
 	walletRoutes.PUT("/deposit", h.DepositToUser)
 	//walletRoutes.PUT("/withdrawal", h.Update)
-	//walletRoutes.PUT("/transfer", h.Update)
-	//walletRoutes.DELETE("/:id", h.Delete)
+	walletRoutes.PUT("/transfer", h.TransferUsers)
+	//walletRoutes.POST("/buy", h.TransferUsers)
+	//walletRoutes.POST("/approve", h.TransferUsers)
+	//walletRoutes.POST("/decline", h.TransferUsers)
 
 	//router.Use(middleware.Logger())
 	router.Use(middleware.Recover())
@@ -196,5 +199,40 @@ func (h *Handler) GetUserBalance(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, map[string]string{
 		"message": fmt.Sprintf("%s balance", user.Email),
 		"balance": fmt.Sprintf("%v", user.Wallet.Balance),
+	})
+}
+
+func (h *Handler) TransferUsers(ctx echo.Context) error {
+	var input wallet.InputTransferUsers
+	if err := ctx.Bind(&input); err != nil {
+		log.WithFields(log.Fields{"handler": "TransferUsers"}).Error(err)
+		return ctx.JSON(http.StatusBadRequest, map[string]string{
+			"message": err.Error(),
+		})
+	}
+	if err := ctx.Validate(&input); err != nil {
+		log.WithFields(log.Fields{"handler": "TransferUsers"}).Error(err)
+		return ctx.JSON(http.StatusUnprocessableEntity, map[string]string{
+			"message": err.Error(),
+		})
+	}
+	if input.FromID == input.ToID {
+		log.WithFields(log.Fields{"handler": "TransferUsers"}).Error(types.ErrSameUser)
+		return ctx.JSON(http.StatusBadRequest, map[string]string{
+			"message": types.ErrSameUser.Error(),
+		})
+	}
+
+	toUser, err := h.usersService.CheckAndDoTransfer(ctx.Request().Context(), input)
+	if err != nil {
+		log.WithFields(log.Fields{"handler": "TransferUsers"}).Error(err)
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{
+			"message": err.Error(),
+		})
+	}
+
+	fmt.Println(input)
+	return ctx.JSON(http.StatusOK, map[string]string{
+		"message": fmt.Sprintf("Transfered %v to %s", input.Amount, toUser.Email),
 	})
 }

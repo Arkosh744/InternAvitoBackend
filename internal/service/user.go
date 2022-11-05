@@ -15,6 +15,7 @@ type UsersRepository interface {
 	CheckWalletByEmail(ctx context.Context, email string) (domain.User, error)
 	CreateWallet(ctx context.Context, input wallet.InputDeposit) (domain.User, error)
 	DepositWallet(ctx context.Context, input wallet.InputDeposit) (domain.User, error)
+	CheckAndDoTransfer(ctx context.Context, input wallet.InputTransferUsers) (domain.User, error)
 }
 
 type Users struct {
@@ -84,4 +85,12 @@ func (u *Users) DepositWallet(ctx context.Context, input wallet.InputDeposit) (d
 		return domain.User{}, err
 	}
 	return userWallet, nil
+}
+
+func (u *Users) CheckAndDoTransfer(ctx context.Context, input wallet.InputTransferUsers) (domain.User, error) {
+	checkTransfer, err := u.repo.CheckAndDoTransfer(ctx, input)
+	if err != nil {
+		return domain.User{}, err
+	}
+	return checkTransfer, nil
 }

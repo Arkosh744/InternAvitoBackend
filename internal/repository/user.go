@@ -71,9 +71,12 @@ func (u *Users) DepositWallet(ctx context.Context, input wallet.InputDeposit) (d
 	if err != nil {
 		return user, err
 	}
-	err = txn.QueryRowContext(ctx,
+	_, err = txn.ExecContext(ctx,
 		"INSERT INTO transactions (wallet_id, amount, status, commentary) values ($1, $2, $3, $4)",
-		user.Wallet.ID, input.Amount, "approved", "Deposit").Scan()
+		user.Wallet.ID, input.Amount, "approved", "Deposit")
+	if err != nil {
+		return user, err
+	}
 	return user, txn.Commit()
 }
 
@@ -117,4 +120,62 @@ func (u *Users) GetUserBalance(ctx context.Context, user domain.User) (domain.Us
 		return user, err
 	}
 	return user, nil
+}
+
+func (u *Users) CheckAndDoTransfer(ctx context.Context, input wallet.InputTransferUsers) (domain.User, error) {
+	var toUser domain.User
+	var fromUser domain.User
+
+	txn, err := u.db.BeginTx(ctx, nil)
+	if err != nil {
+		return toUser, err
+	}
+	defer func() {
+		_ = txn.Rollback()
+	}()
+
+	err = txn.QueryRowContext(ctx, "SELECT wallets.id, balance FROM wallets INNER JOIN users u on wallets.id=u.wallet WHERE u.id=$1", input.FromID).
+		Scan(&fromUser.Wallet.ID, &fromUser.Wallet.Balance)
+	if err == sql.ErrNoRows {
+		return toUser, types.ErrUserFromNotFound
+	} else if fromUser.Wallet.Balance < input.Amount {
+		return toUser, types.ErrInsufficientFunds
+	}
+	err = txn.QueryRowContext(ctx, "SELECT email, wallet FROM users WHERE id=$1", input.ToID).Scan(&toUser.Email, &toUser.Wallet.ID)
+	if err == sql.ErrNoRows {
+		return toUser, types.ErrUserToNotFound
+	} else if toUser.Wallet.ID == uuid.Nil {
+		// Можно вызвать функцию
+		// u.CreateWallet(ctx, wallet.InputDeposit{IDUser: input.ToID, Amount: input.Amount}),
+		// но у нее внутри своя транзакция и поэтому думаю, что тогда не получится откатить текущую транзакцию
+		err = txn.QueryRowContext(ctx, "INSERT INTO wallets (balance, reserved) values (0, 0) returning id").
+			Scan(&toUser.Wallet.ID)
+		if err != nil {
+			return toUser, err
+		}
+		_, err = txn.ExecContext(ctx, "UPDATE users SET wallet=$1 WHERE id=$2", toUser.Wallet.ID, input.ToID)
+		if err != nil {
+			return toUser, err
+		}
+	}
+
+	err = txn.QueryRowContext(ctx,
+		"UPDATE wallets SET balance=wallets.balance-$1 WHERE id=$2 RETURNING balance",
+		input.Amount, fromUser.Wallet.ID).Scan(&fromUser.Wallet.Balance)
+	if err != nil {
+		return toUser, err
+	}
+	err = txn.QueryRowContext(ctx,
+		"UPDATE wallets SET balance=wallets.balance+$1 WHERE id=$2 RETURNING balance",
+		input.Amount, toUser.Wallet.ID).Scan(&toUser.Wallet.Balance)
+
+	_, err = txn.ExecContext(ctx, "INSERT INTO transactions (wallet_id, amount, status, commentary) values ($1, $2, $3, $4)",
+		fromUser.Wallet.ID, input.Amount, "approved", "payment send to user")
+	_, err = txn.ExecContext(ctx, "INSERT INTO transactions (wallet_id, amount, status, commentary) values ($1, $2, $3, $4)",
+		toUser.Wallet.ID, input.Amount, "approved", "payment received from user")
+	if err != nil {
+		return toUser, err
+	}
+
+	return toUser, txn.Commit()
 }
