@@ -19,6 +19,7 @@ var (
 	ErrBusy                = errors.New("resource is busy")
 	ErrUnauthorized        = errors.New("unauthorized")
 	ErrAlreadyExists       = errors.New("already exists")
+	ErrNotEnoughData       = errors.New("not enough user data provided")
 )
 
 type HTTPError struct {

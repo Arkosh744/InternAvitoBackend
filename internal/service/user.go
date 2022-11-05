@@ -3,11 +3,14 @@ package service
 import (
 	"context"
 	"github.com/Arkosh744/InternAvitoBackend/internal/domain"
+	"github.com/Arkosh744/InternAvitoBackend/internal/domain/wallet"
 )
 
 type UsersRepository interface {
-	Create(ctx context.Context, user domain.WalletUser) (domain.WalletUser, error)
-	CheckByEmail(ctx context.Context, email string) (domain.WalletUser, error)
+	Create(ctx context.Context, user domain.User) (domain.User, error)
+	CheckUserByEmail(ctx context.Context, email string) (domain.User, error)
+	CheckWalletByEmail(ctx context.Context, email string) (domain.User, error)
+	CreateWallet(ctx context.Context, input wallet.InputDeposit) (domain.User, error)
 }
 
 type Users struct {
@@ -20,7 +23,7 @@ func NewUsersService(repo UsersRepository) *Users {
 	}
 }
 
-func (u *Users) Create(ctx context.Context, user domain.WalletUser) (domain.WalletUser, error) {
+func (u *Users) Create(ctx context.Context, user domain.User) (domain.User, error) {
 	newUserWallet, err := u.repo.Create(ctx, user)
 	if err != nil {
 		return newUserWallet, err
@@ -28,15 +31,32 @@ func (u *Users) Create(ctx context.Context, user domain.WalletUser) (domain.Wall
 	return newUserWallet, err
 }
 
-func (u *Users) GetById(ctx context.Context, id int) (domain.WalletUser, error) {
-	return domain.WalletUser{}, nil
+func (u *Users) GetById(ctx context.Context, id int) (domain.User, error) {
+	return domain.User{}, nil
 }
 
-func (u *Users) CheckByEmail(ctx context.Context, email string) (domain.WalletUser, error) {
-	checkUser, err := u.repo.CheckByEmail(ctx, email)
+func (u *Users) CheckUserByEmail(ctx context.Context, email string) (domain.User, error) {
+	checkUser, err := u.repo.CheckUserByEmail(ctx, email)
 	if err != nil {
 		return checkUser, err
 	}
 
-	return domain.WalletUser{}, nil
+	return domain.User{}, nil
+}
+
+func (u *Users) CheckWalletByEmail(ctx context.Context, email string) (domain.User, error) {
+	checkWalletUser, err := u.repo.CheckWalletByEmail(ctx, email)
+	if err != nil {
+		return domain.User{}, err
+	}
+
+	return checkWalletUser, nil
+}
+
+func (u *Users) CreateWallet(ctx context.Context, input wallet.InputDeposit) (domain.User, error) {
+	userWallet, err := u.repo.CreateWallet(ctx, input)
+	if err != nil {
+		return domain.User{}, err
+	}
+	return userWallet, nil
 }
