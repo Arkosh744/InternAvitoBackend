@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS transactions
     id         uuid PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
     wallet_id  uuid             NOT NULL,
     amount     numeric          NOT NULL,
-    status     serial           NOT NULL,
+    status     varchar(255)     NOT NULL,
     commentary text                      DEFAULT NULL,
     created_at timestamp        NOT NULL DEFAULT NOW(),
     updated_at timestamp        NOT NULL DEFAULT NOW()
@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS transactions
 CREATE TABLE IF NOT EXISTS transaction_statuses
 (
     id     serial PRIMARY KEY NOT NULL,
-    status varchar(255)       NOT NULL
+    status varchar(255)       NOT NULL UNIQUE
 );
 
 INSERT INTO transaction_statuses (status)
@@ -46,7 +46,7 @@ ALTER TABLE users
 
 ALTER TABLE transactions
     ADD CONSTRAINT wallet_id_fk FOREIGN KEY (wallet_id) REFERENCES wallets (id) ON DELETE CASCADE,
-    ADD CONSTRAINT status_fk FOREIGN KEY (status) REFERENCES transaction_statuses (id) ON DELETE CASCADE;
+    ADD CONSTRAINT status_fk FOREIGN KEY (status) REFERENCES transaction_statuses (status) ON DELETE CASCADE;
 
 CREATE TABLE IF NOT EXISTS services
 (
