@@ -8,6 +8,8 @@ docker run --name avito_intern -e POSTGRES_PASSWORD=docker -p 54322:5432 -d post
 Реализовано:
 1) Метод начисления средств на баланс.
    - Принимает id пользователя / id кошелька / email и сколько средств зачислить. Возвращает message с email и balance.
+2) Метод получения баланса по id пользователя. 
+   - Принимает id пользователя. Возвращает message с email; balance.
 
 
 Вопросы:
