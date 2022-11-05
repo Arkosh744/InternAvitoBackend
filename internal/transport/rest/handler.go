@@ -17,6 +17,7 @@ import (
 
 type Users interface {
 	Create(ctx context.Context, user domain.User) (domain.User, error)
+	GetUserBalance(ctx context.Context, user domain.User) (domain.User, error)
 	CheckUserByEmail(ctx context.Context, email string) (domain.User, error)
 	CheckWalletByUserID(ctx context.Context, uuid uuid.UUID) (domain.User, error)
 	CheckWalletByEmail(ctx context.Context, user string) (domain.User, error)
@@ -41,16 +42,15 @@ func (h *Handler) InitRouter() *echo.Echo {
 	v1 := router.Group("/v1")
 	userRoutes := v1.Group("/user")
 	userRoutes.POST("/", h.Create)
-	userRoutes.GET("/:id", h.Get)
+	userRoutes.GET("/:id", h.GetUserBalance)
 
 	walletRoutes := userRoutes.Group("/wallet")
 
 	walletRoutes.PUT("/deposit", h.DepositToUser)
-	walletRoutes.PUT("/withdrawal", h.Update)
-	walletRoutes.PUT("/transfer", h.Update)
-	walletRoutes.DELETE("/:id", h.Delete)
+	//walletRoutes.PUT("/withdrawal", h.Update)
+	//walletRoutes.PUT("/transfer", h.Update)
+	//walletRoutes.DELETE("/:id", h.Delete)
 
-	//Middleware
 	//router.Use(middleware.Logger())
 	router.Use(middleware.Recover())
 
@@ -172,17 +172,29 @@ func (h *Handler) DepositToUser(ctx echo.Context) error {
 	})
 }
 
-func (h *Handler) Get(ctx echo.Context) error {
+func (h *Handler) GetUserBalance(ctx echo.Context) error {
+	var user domain.User
+	var err error
+	user.ID, err = uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		log.WithFields(log.Fields{"handler": "GetUserBalance"}).Error(err)
+		return ctx.JSON(http.StatusBadRequest, map[string]string{
+			"message": err.Error(),
+		})
+	}
+	user, err = h.usersService.GetUserBalance(ctx.Request().Context(), user)
+	if err == types.ErrNoWallet {
+		return ctx.JSON(http.StatusNotFound, map[string]string{
+			"message": err.Error(),
+		})
+	} else if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{
+			"message": "could not get user balance " + err.Error(),
+		})
+	}
 
-	return nil
-}
-
-func (h *Handler) Update(ctx echo.Context) error {
-
-	return nil
-}
-
-func (h *Handler) Delete(ctx echo.Context) error {
-
-	return nil
+	return ctx.JSON(http.StatusOK, map[string]string{
+		"message": fmt.Sprintf("%s balance", user.Email),
+		"balance": fmt.Sprintf("%v", user.Wallet.Balance),
+	})
 }

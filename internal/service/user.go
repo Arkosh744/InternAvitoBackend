@@ -9,6 +9,7 @@ import (
 
 type UsersRepository interface {
 	Create(ctx context.Context, user domain.User) (domain.User, error)
+	GetUserBalance(ctx context.Context, user domain.User) (domain.User, error)
 	CheckUserByEmail(ctx context.Context, email string) (domain.User, error)
 	CheckWalletByUserID(ctx context.Context, uuid uuid.UUID) (domain.User, error)
 	CheckWalletByEmail(ctx context.Context, email string) (domain.User, error)
@@ -34,8 +35,12 @@ func (u *Users) Create(ctx context.Context, user domain.User) (domain.User, erro
 	return newUserWallet, err
 }
 
-func (u *Users) GetById(ctx context.Context, id int) (domain.User, error) {
-	return domain.User{}, nil
+func (u *Users) GetUserBalance(ctx context.Context, user domain.User) (domain.User, error) {
+	userBalance, err := u.repo.GetUserBalance(ctx, user)
+	if err != nil {
+		return domain.User{}, err
+	}
+	return userBalance, nil
 }
 
 func (u *Users) CheckUserByEmail(ctx context.Context, email string) (domain.User, error) {

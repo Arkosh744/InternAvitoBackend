@@ -22,6 +22,7 @@ var (
 	ErrNotEnoughData       = errors.New("not enough user data provided")
 	ErrTooMuchData         = errors.New("too much user data provided, " +
 		"only one of the following is allowed: wallet, user_id, email")
+	ErrNoWallet = errors.New("user does not exist or does not have a wallet")
 )
 
 type HTTPError struct {
