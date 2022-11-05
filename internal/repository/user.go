@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"github.com/Arkosh744/InternAvitoBackend/internal/domain"
 	"github.com/Arkosh744/InternAvitoBackend/internal/domain/wallet"
 	"github.com/Arkosh744/InternAvitoBackend/pkg/lib/types"
@@ -63,11 +64,13 @@ func (u *Users) DepositWallet(ctx context.Context, input wallet.InputDeposit) (d
 	defer func() {
 		_ = txn.Rollback()
 	}()
-
+	fmt.Println(input)
+	fmt.Println(user)
 	err = txn.QueryRowContext(ctx,
-		"UPDATE wallets SET balance=wallets.balance+$1 FROM users INNER JOIN wallets w on w.id = users.wallet WHERE wallets.id=$2 RETURNING wallets.id, wallets.balance, email",
+		"UPDATE wallets w1 SET balance=w1.balance+$1 FROM wallets w2 INNER JOIN users on users.wallet = w2.id WHERE users.wallet=$2 AND w1.id =w2.id RETURNING w1.id, w1.balance, users.email",
 		input.Amount, input.IDWallet).
 		Scan(&user.Wallet.ID, &user.Wallet.Balance, &user.Email)
+	fmt.Println(user)
 	if err != nil {
 		return user, err
 	}
@@ -170,7 +173,7 @@ func (u *Users) CheckAndDoTransfer(ctx context.Context, input wallet.InputTransf
 		input.Amount, toUser.Wallet.ID).Scan(&toUser.Wallet.Balance)
 
 	_, err = txn.ExecContext(ctx, "INSERT INTO transactions (wallet_id, amount, status, commentary) values ($1, $2, $3, $4)",
-		fromUser.Wallet.ID, input.Amount, "approved", "payment send to user")
+		fromUser.Wallet.ID, -input.Amount, "approved", "payment send to user")
 	_, err = txn.ExecContext(ctx, "INSERT INTO transactions (wallet_id, amount, status, commentary) values ($1, $2, $3, $4)",
 		toUser.Wallet.ID, input.Amount, "approved", "payment received from user")
 	if err != nil {
@@ -178,4 +181,54 @@ func (u *Users) CheckAndDoTransfer(ctx context.Context, input wallet.InputTransf
 	}
 
 	return toUser, txn.Commit()
+}
+
+func (u *Users) BuyServiceUser(ctx context.Context, input wallet.InputBuyServiceUser) (wallet.OutPendingOrder, error) {
+	var user domain.User
+	var order wallet.OutPendingOrder
+
+	txn, err := u.db.BeginTx(ctx, nil)
+	if err != nil {
+		return order, err
+	}
+	defer func() {
+		_ = txn.Rollback()
+	}()
+
+	err = txn.QueryRowContext(ctx,
+		"SELECT wallets.id, balance FROM wallets INNER JOIN users u on wallets.id=u.wallet WHERE u.id=$1",
+		input.IDUser).Scan(&user.Wallet.ID, &user.Wallet.Balance)
+	if err == sql.ErrNoRows {
+		return order, types.ErrUserBuyer
+	} else if user.Wallet.Balance < input.Cost {
+		return order, types.ErrInsufficientFunds
+	}
+	err = txn.QueryRowContext(ctx,
+		"UPDATE wallets SET balance=wallets.balance-$1, reserved=wallets.reserved+$1 WHERE id=$2 RETURNING balance",
+		input.Cost, user.Wallet.ID).Scan(&user.Wallet.Balance)
+	if err != nil {
+		return order, err
+	}
+	err = txn.QueryRowContext(ctx, "INSERT INTO transactions (wallet_id, amount, status, commentary) VALUES ($1, $2, $3, $4) RETURNING id",
+		user.Wallet.ID, -input.Cost, "pending", fmt.Sprintf("payment for %s", input.ServiceName)).Scan(&order.Txn)
+
+	err = txn.QueryRowContext(ctx,
+		"INSERT INTO orders (user_id, service, price, status, transaction_id) VALUES ($1, $2, $3, $4, $5) RETURNING id, status",
+		input.IDUser, input.ServiceName, input.Cost, "created", order.Txn).Scan(&order.ID, &order.Status)
+
+	if err != nil {
+		if err.Error() == `pq: insert or update on table "orders" violates foreign key constraint "service_fk"` {
+			return wallet.OutPendingOrder{}, types.ErrServiceNotFound
+		} else {
+			return wallet.OutPendingOrder{}, err
+		}
+	}
+	order.Cost = input.Cost
+	order.ServiceName = input.ServiceName
+
+	if err != nil {
+		return wallet.OutPendingOrder{}, err
+	}
+
+	return order, txn.Commit()
 }

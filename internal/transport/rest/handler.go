@@ -24,6 +24,7 @@ type Users interface {
 	CreateWallet(ctx context.Context, input wallet.InputDeposit) (domain.User, error)
 	DepositWallet(ctx context.Context, input wallet.InputDeposit) (domain.User, error)
 	CheckAndDoTransfer(ctx context.Context, input wallet.InputTransferUsers) (domain.User, error)
+	BuyServiceUser(ctx context.Context, input wallet.InputBuyServiceUser) (wallet.OutPendingOrder, error)
 }
 
 type Handler struct {
@@ -50,7 +51,7 @@ func (h *Handler) InitRouter() *echo.Echo {
 	walletRoutes.PUT("/deposit", h.DepositToUser)
 	//walletRoutes.PUT("/withdrawal", h.Update)
 	walletRoutes.PUT("/transfer", h.TransferUsers)
-	//walletRoutes.POST("/buy", h.TransferUsers)
+	walletRoutes.POST("/buy", h.BuyServiceUser)
 	//walletRoutes.POST("/approve", h.TransferUsers)
 	//walletRoutes.POST("/decline", h.TransferUsers)
 
@@ -169,7 +170,6 @@ func (h *Handler) DepositToUser(ctx echo.Context) error {
 			"message": "could not deposit to user" + err.Error(),
 		})
 	}
-	log.Println(user)
 	return ctx.JSON(http.StatusOK, map[string]string{
 		"message": fmt.Sprintf("Deposited %v to %s. Balance: %v", input.Amount, user.Email, user.Wallet.Balance),
 	})
@@ -234,5 +234,33 @@ func (h *Handler) TransferUsers(ctx echo.Context) error {
 	fmt.Println(input)
 	return ctx.JSON(http.StatusOK, map[string]string{
 		"message": fmt.Sprintf("Transfered %v to %s", input.Amount, toUser.Email),
+	})
+}
+
+func (h *Handler) BuyServiceUser(ctx echo.Context) error {
+	var input wallet.InputBuyServiceUser
+	if err := ctx.Bind(&input); err != nil {
+		log.WithFields(log.Fields{"handler": "BuyServiceUser"}).Error(err)
+		return ctx.JSON(http.StatusBadRequest, map[string]string{
+			"message": err.Error(),
+		})
+	}
+	if err := ctx.Validate(&input); err != nil {
+		log.WithFields(log.Fields{"handler": "BuyServiceUser"}).Error(err)
+		return ctx.JSON(http.StatusUnprocessableEntity, map[string]string{
+			"message": err.Error(),
+		})
+	}
+
+	order, err := h.usersService.BuyServiceUser(ctx.Request().Context(), input)
+	if err != nil {
+		log.WithFields(log.Fields{"handler": "BuyServiceUser"}).Error(err)
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{
+			"message": err.Error(),
+		})
+	}
+	return ctx.JSON(http.StatusOK, map[string]string{
+		"message":  fmt.Sprintf("Created order for %s for %v", order.ServiceName, order.Cost),
+		"order_id": order.ID.String(),
 	})
 }

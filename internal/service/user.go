@@ -16,6 +16,7 @@ type UsersRepository interface {
 	CreateWallet(ctx context.Context, input wallet.InputDeposit) (domain.User, error)
 	DepositWallet(ctx context.Context, input wallet.InputDeposit) (domain.User, error)
 	CheckAndDoTransfer(ctx context.Context, input wallet.InputTransferUsers) (domain.User, error)
+	BuyServiceUser(ctx context.Context, input wallet.InputBuyServiceUser) (wallet.OutPendingOrder, error)
 }
 
 type Users struct {
@@ -93,4 +94,12 @@ func (u *Users) CheckAndDoTransfer(ctx context.Context, input wallet.InputTransf
 		return domain.User{}, err
 	}
 	return checkTransfer, nil
+}
+
+func (u *Users) BuyServiceUser(ctx context.Context, input wallet.InputBuyServiceUser) (wallet.OutPendingOrder, error) {
+	buyServiceUser, err := u.repo.BuyServiceUser(ctx, input)
+	if err != nil {
+		return wallet.OutPendingOrder{}, err
+	}
+	return buyServiceUser, nil
 }

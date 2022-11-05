@@ -9,7 +9,6 @@ var (
 	ErrNotFound            = errors.New("resource not found")
 	ErrConflict            = errors.New("datamodel conflict")
 	ErrForbidden           = errors.New("forbidden access")
-	ErrNeedMore            = errors.New("need more input")
 	ErrBadRequest          = errors.New("bad request")
 	ErrPartialOk           = errors.New("partial okay")
 	ErrDuplicateEntry      = errors.New("duplicate entry")
@@ -24,9 +23,11 @@ var (
 		"only one of the following is allowed: wallet, user_id, email")
 	ErrNoWallet          = errors.New("user does not exist or does not have a wallet")
 	ErrSameUser          = errors.New("user cannot send money to himself")
-	ErrInsufficientFunds = errors.New("insufficient funds")
+	ErrInsufficientFunds = errors.New("insufficient funds to complete the transaction")
 	ErrUserFromNotFound  = errors.New("sender does not exist")
 	ErrUserToNotFound    = errors.New("you want to send money to a user that does not exist")
+	ErrUserBuyer         = errors.New("buyer does not exist")
+	ErrServiceNotFound   = errors.New("service does not exist")
 )
 
 type HTTPError struct {
