@@ -107,3 +107,14 @@ func (u *Users) CreateWallet(ctx context.Context, input wallet.InputDeposit) (do
 	}
 	return user, txn.Commit()
 }
+
+func (u *Users) GetUserBalance(ctx context.Context, user domain.User) (domain.User, error) {
+	err := u.db.QueryRowContext(ctx, "SELECT email, balance FROM wallets INNER JOIN users u on wallets.id = u.wallet WHERE u.id=$1", user.ID).
+		Scan(&user.Email, &user.Wallet.Balance)
+	if err == sql.ErrNoRows {
+		return user, types.ErrNoWallet
+	} else if err != nil {
+		return user, err
+	}
+	return user, nil
+}
