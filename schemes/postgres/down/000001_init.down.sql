@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS users, wallets, transactions, transaction_statuses, services, orders, order_statuses;
