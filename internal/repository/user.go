@@ -56,14 +56,25 @@ func (u *Users) CheckWalletByEmail(ctx context.Context, email string) (domain.Us
 
 func (u *Users) DepositWallet(ctx context.Context, input wallet.InputDeposit) (domain.User, error) {
 	var user domain.User
-	err := u.db.QueryRowContext(ctx,
+	txn, err := u.db.BeginTx(ctx, nil)
+	if err != nil {
+		return user, err
+	}
+	defer func() {
+		_ = txn.Rollback()
+	}()
+
+	err = txn.QueryRowContext(ctx,
 		"UPDATE wallets SET balance=wallets.balance+$1 FROM users INNER JOIN wallets w on w.id = users.wallet WHERE wallets.id=$2 RETURNING wallets.id, wallets.balance, email",
 		input.Amount, input.IDWallet).
 		Scan(&user.Wallet.ID, &user.Wallet.Balance, &user.Email)
 	if err != nil {
 		return user, err
 	}
-	return user, nil
+	err = txn.QueryRowContext(ctx,
+		"INSERT INTO transactions (wallet_id, amount, status, commentary) values ($1, $2, $3, $4)",
+		user.Wallet.ID, input.Amount, "approved", "Deposit").Scan()
+	return user, txn.Commit()
 }
 
 func (u *Users) CreateWallet(ctx context.Context, input wallet.InputDeposit) (domain.User, error) {
