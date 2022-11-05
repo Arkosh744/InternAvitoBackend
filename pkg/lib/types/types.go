@@ -20,6 +20,8 @@ var (
 	ErrUnauthorized        = errors.New("unauthorized")
 	ErrAlreadyExists       = errors.New("already exists")
 	ErrNotEnoughData       = errors.New("not enough user data provided")
+	ErrTooMuchData         = errors.New("too much user data provided, " +
+		"only one of the following is allowed: wallet, user_id, email")
 )
 
 type HTTPError struct {

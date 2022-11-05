@@ -2,6 +2,7 @@ package rest
 
 import (
 	"context"
+	"fmt"
 	"github.com/Arkosh744/InternAvitoBackend/internal/domain"
 	"github.com/Arkosh744/InternAvitoBackend/internal/domain/wallet"
 	"github.com/Arkosh744/InternAvitoBackend/pkg/lib/types"
@@ -17,8 +18,10 @@ import (
 type Users interface {
 	Create(ctx context.Context, user domain.User) (domain.User, error)
 	CheckUserByEmail(ctx context.Context, email string) (domain.User, error)
+	CheckWalletByUserID(ctx context.Context, uuid uuid.UUID) (domain.User, error)
 	CheckWalletByEmail(ctx context.Context, user string) (domain.User, error)
 	CreateWallet(ctx context.Context, input wallet.InputDeposit) (domain.User, error)
+	DepositWallet(ctx context.Context, input wallet.InputDeposit) (domain.User, error)
 }
 
 type Handler struct {
@@ -108,11 +111,27 @@ func (h *Handler) DepositToUser(ctx echo.Context) error {
 		})
 	}
 
-	if input.IDWallet != uuid.Nil {
-
-	} else if input.IDUser != uuid.Nil {
-		log.Println("User ID is not nil")
-	} else if input.EmailUser != "" {
+	if input.IDWallet != uuid.Nil && input.EmailUser == "" && input.IDUser == uuid.Nil {
+		// just check it and continue
+	} else if input.IDUser != uuid.Nil && input.EmailUser == "" && input.IDWallet == uuid.Nil {
+		userWallet, err := h.usersService.CheckWalletByUserID(ctx.Request().Context(), input.IDUser)
+		if err != nil {
+			log.WithFields(log.Fields{"handler": "DepositToUser"}).Error(err)
+			return ctx.JSON(http.StatusNotFound, map[string]string{
+				"message": "could not find user: " + err.Error(),
+			})
+		}
+		if userWallet.Wallet.ID == uuid.Nil {
+			userWallet, err = h.usersService.CreateWallet(ctx.Request().Context(), input)
+			if err != nil {
+				log.WithFields(log.Fields{"handler": "DepositToUser"}).Error(err)
+				return ctx.JSON(http.StatusInternalServerError, map[string]string{
+					"message": "could not create wallet: " + err.Error(),
+				})
+			}
+		}
+		input.IDWallet = userWallet.Wallet.ID
+	} else if input.EmailUser != "" && input.IDUser == uuid.Nil && input.IDWallet == uuid.Nil {
 		userWallet, err := h.usersService.CheckWalletByEmail(ctx.Request().Context(), input.EmailUser)
 		if err != nil {
 			log.WithFields(log.Fields{"handler": "DepositToUser"}).Error(err)
@@ -130,19 +149,27 @@ func (h *Handler) DepositToUser(ctx echo.Context) error {
 			}
 		}
 		input.IDWallet = userWallet.Wallet.ID
-	} else {
+	} else if input.IDWallet == uuid.Nil && input.EmailUser == "" && input.IDUser == uuid.Nil {
 		log.WithFields(log.Fields{"handler": "DepositToUser"}).Error(types.ErrNotEnoughData)
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
 			"message": types.ErrNotEnoughData.Error(),
 		})
+	} else {
+		log.WithFields(log.Fields{"handler": "DepositToUser"}).Error(types.ErrTooMuchData)
+		return ctx.JSON(http.StatusBadRequest, map[string]string{
+			"message": types.ErrTooMuchData.Error(),
+		})
 	}
-
-	if input.IDWallet != uuid.Nil {
-
+	user, err := h.usersService.DepositWallet(ctx.Request().Context(), input)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{
+			"message": "could not deposit to user" + err.Error(),
+		})
 	}
-	log.Println(input)
-
-	return nil
+	log.Println(user)
+	return ctx.JSON(http.StatusOK, map[string]string{
+		"message": fmt.Sprintf("Deposited %v to %s. Balance: %v", input.Amount, user.Email, user.Wallet.Balance),
+	})
 }
 
 func (h *Handler) Get(ctx echo.Context) error {
