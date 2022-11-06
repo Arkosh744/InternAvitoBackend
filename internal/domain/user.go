@@ -57,3 +57,17 @@ func (User *User) ToWebWalletUser() *WebUserWalletBalance {
 		Reserved:  User.Wallet.Reserved,
 	}
 }
+
+type InputReportUserTnx struct {
+	IDUser    uuid.UUID `json:"user_id"`
+	Limit     int       `json:"limit"`
+	Offset    int       `json:"offset"`
+	Order     string    `json:"order"`
+	SortField string    `json:"sort_field"`
+}
+
+type OutputReportUserTnx struct {
+	Date       time.Time
+	Commentary string
+	Amount     float64
+}

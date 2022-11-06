@@ -320,12 +320,10 @@ func (u *Users) ReportMonth(ctx context.Context, year, month int) error {
 	}
 	var reportData []report
 	rows, err := u.db.QueryContext(ctx,
-		"SELECT commentary, sum(amount) FROM transactions WHERE created_at > NOW() - INTERVAL '30 day' AND status='approved' AND commentary LIKE '%income%' AND EXTRACT(MONTH FROM created_at)=$1 AND EXTRACT(YEAR FROM created_at)=$2 GROUP BY commentary;",
+		"SELECT commentary, sum(amount) FROM transactions WHERE status='approved' AND commentary LIKE '%income%' AND EXTRACT(MONTH FROM created_at)=$1 AND EXTRACT(YEAR FROM created_at)=$2 GROUP BY commentary;",
 		month, year)
 	if err != nil {
 		return err
-	} else if rows == nil {
-		return nil
 	}
 	defer rows.Close()
 
@@ -338,6 +336,31 @@ func (u *Users) ReportMonth(ctx context.Context, year, month int) error {
 	}
 	if len(reportData) == 0 {
 		fmt.Printf("No data for %d-%d", year, month)
+		return nil
+	}
+
+	return nil
+}
+
+func (u *Users) ReportForUser(ctx context.Context, input domain.InputReportUserTnx) error {
+	var reportData []domain.OutputReportUserTnx
+	query := fmt.Sprintf("SELECT created_at, commentary, amount FROM transactions WHERE wallet_id = (SELECT wallet FROM users WHERE users.id=$1) ORDER BY %s %s LIMIT $2 OFFSET $3", input.SortField, input.Order)
+	rows, err := u.db.QueryContext(ctx, query, input.IDUser, input.Limit, input.Offset)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var r domain.OutputReportUserTnx
+		if err := rows.Scan(&r.Date, &r.Commentary, &r.Amount); err != nil {
+			return err
+		}
+		reportData = append(reportData, r)
+	}
+
+	if len(reportData) == 0 {
+		fmt.Printf("No data for %+v", input)
 		return nil
 	}
 
