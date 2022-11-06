@@ -65,13 +65,10 @@ func (u *Users) DepositWallet(ctx context.Context, input wallet.InputDeposit) (d
 	defer func() {
 		_ = txn.Rollback()
 	}()
-	fmt.Println(input)
-	fmt.Println(user)
 	err = txn.QueryRowContext(ctx,
 		"UPDATE wallets w1 SET balance=w1.balance+$1 FROM wallets w2 INNER JOIN users on users.wallet = w2.id WHERE users.wallet=$2 AND w1.id =w2.id RETURNING w1.id, w1.balance, users.email",
 		input.Amount, input.IDWallet).
 		Scan(&user.Wallet.ID, &user.Wallet.Balance, &user.Email)
-	fmt.Println(user)
 	if err != nil {
 		return user, err
 	}
@@ -262,7 +259,6 @@ func (u *Users) ManageOrder(ctx context.Context, input wallet.InputOrderManager)
 	} else if orderStatusCurrent == "completed" || orderStatusCurrent == "canceled" {
 		return order, types.ErrOrderCompleted
 	}
-	fmt.Println(input.Status)
 	// Проверяем, что транзакция существует и обновляем статус
 	_, err = txn.ExecContext(ctx,
 		"UPDATE transactions SET status=$1 WHERE id=$2",
@@ -310,10 +306,40 @@ func (u *Users) ManageOrder(ctx context.Context, input wallet.InputOrderManager)
 			"INSERT INTO transactions (wallet_id, amount, status, commentary) VALUES ((SELECT vendor_wallet FROM services WHERE services.name=$1), $2, $3, $4)",
 			order.ServiceName, order.Cost, input.Status, fmt.Sprintf("income from %s", order.ServiceName))
 		if err != nil {
-			fmt.Printf("err3: %v", err)
 			return order, err
 		}
 	}
 
 	return order, txn.Commit()
+}
+
+func (u *Users) ReportMonth(ctx context.Context, year, month int) error {
+	type report struct {
+		Amount int
+		text   string
+	}
+	var reportData []report
+	rows, err := u.db.QueryContext(ctx,
+		"SELECT commentary, sum(amount) FROM transactions WHERE created_at > NOW() - INTERVAL '30 day' AND status='approved' AND commentary LIKE '%income%' AND EXTRACT(MONTH FROM created_at)=$1 AND EXTRACT(YEAR FROM created_at)=$2 GROUP BY commentary;",
+		month, year)
+	if err != nil {
+		return err
+	} else if rows == nil {
+		return nil
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var r report
+		if err := rows.Scan(&r.text, &r.Amount); err != nil {
+			return err
+		}
+		reportData = append(reportData, r)
+	}
+	if len(reportData) == 0 {
+		fmt.Printf("No data for %d-%d", year, month)
+		return nil
+	}
+
+	return nil
 }

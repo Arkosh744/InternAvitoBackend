@@ -49,11 +49,11 @@ func (h *Handler) InitRouter() *echo.Echo {
 	userRoutes.GET("/:id", h.GetUserBalance)
 
 	walletRoutes := userRoutes.Group("/wallet")
-
 	walletRoutes.PUT("/deposit", h.DepositToUser)
-	//walletRoutes.PUT("/withdrawal", h.Update)
-	orderRoutes := walletRoutes.Group("/order")
+	// Когда-нибудь мы разрешим нашим пользователям выводить деньги, но не сегодня
+	// walletRoutes.PUT("/withdrawal", h.Update)
 
+	orderRoutes := walletRoutes.Group("/order")
 	orderRoutes.PUT("/transfer", h.TransferUsers)
 	orderRoutes.POST("/buy", h.BuyServiceUser)
 	orderRoutes.POST("/approve", h.ManageOrder)

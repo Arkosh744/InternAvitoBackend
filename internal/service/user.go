@@ -18,6 +18,7 @@ type UsersRepository interface {
 	CheckAndDoTransfer(ctx context.Context, input wallet.InputTransferUsers) (domain.User, error)
 	BuyServiceUser(ctx context.Context, input wallet.InputBuyServiceUser) (wallet.OutPendingOrder, error)
 	ManageOrder(ctx context.Context, input wallet.InputOrderManager) (wallet.OutOrderManager, error)
+	ReportMonth(ctx context.Context, year, month int) error
 }
 
 type Users struct {
