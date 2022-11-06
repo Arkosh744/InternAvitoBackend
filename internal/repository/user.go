@@ -8,6 +8,7 @@ import (
 	"github.com/Arkosh744/InternAvitoBackend/internal/domain/wallet"
 	"github.com/Arkosh744/InternAvitoBackend/pkg/lib/types"
 	"github.com/google/uuid"
+	"time"
 )
 
 type Users struct {
@@ -228,6 +229,90 @@ func (u *Users) BuyServiceUser(ctx context.Context, input wallet.InputBuyService
 
 	if err != nil {
 		return wallet.OutPendingOrder{}, err
+	}
+
+	return order, txn.Commit()
+}
+
+func (u *Users) ManageOrder(ctx context.Context, input wallet.InputOrderManager) (wallet.OutOrderManager, error) {
+	var order wallet.OutOrderManager
+	var orderStatusCurrent string
+
+	if input.Status == "approved" {
+		order.Status = "completed"
+	} else {
+		order.Status = "canceled"
+	}
+
+	txn, err := u.db.BeginTx(ctx, nil)
+	if err != nil {
+		return order, err
+	}
+	defer func() {
+		_ = txn.Rollback()
+	}()
+
+	// Проверяем, что заказ существует
+	err = txn.QueryRowContext(ctx,
+		"SELECT status, transaction_id, price, service FROM orders WHERE id=$1 AND user_id=$2", input.IDOrder, input.IDUser).
+		Scan(&orderStatusCurrent, &order.TxnBuyer, &order.Cost, &order.ServiceName)
+
+	if err == sql.ErrNoRows {
+		return order, types.ErrOrderNotFound
+	} else if orderStatusCurrent == "completed" || orderStatusCurrent == "canceled" {
+		return order, types.ErrOrderCompleted
+	}
+	fmt.Println(input.Status)
+	// Проверяем, что транзакция существует и обновляем статус
+	_, err = txn.ExecContext(ctx,
+		"UPDATE transactions SET status=$1 WHERE id=$2",
+		input.Status, order.TxnBuyer)
+	if err != nil {
+		return order, err
+	}
+
+	// Обновляем статус заказа
+	_, err = txn.ExecContext(ctx,
+		"UPDATE orders SET status=$1, updated_at=$2 WHERE id=$3",
+		order.Status, time.Now(), input.IDOrder)
+	if err != nil {
+		return order, err
+	}
+
+	if input.Status == "canceled" {
+		// Если заказ отклонен, то возвращаем деньги на счет и убираем резерв
+		_, err = txn.ExecContext(ctx,
+			"UPDATE wallets SET balance=wallets.balance+$1, reserved=wallets.reserved-$1 WHERE (SELECT wallet FROM users WHERE users.id=$2)=wallets.id",
+			order.Cost, input.IDUser)
+		if err != nil {
+			return order, err
+		}
+
+	} else if input.Status == "approved" {
+		// Если заказ одобрен, то списываем деньги с резерва
+		_, err = txn.ExecContext(ctx,
+			"UPDATE wallets SET reserved=wallets.reserved-$1 WHERE (SELECT wallet FROM users WHERE users.id=$2)=wallets.id",
+			order.Cost, input.IDUser)
+		if err != nil {
+			return order, err
+		}
+
+		// Добавляем деньги продавцу на счет
+		_, err = txn.ExecContext(ctx,
+			"UPDATE wallets SET balance=wallets.balance+$1 WHERE (SELECT vendor_wallet FROM services WHERE services.name=$2)=wallets.id",
+			order.Cost, order.ServiceName)
+		if err != nil {
+			return order, err
+		}
+
+		// Создаем транзакцию продавцу
+		_, err = txn.ExecContext(ctx,
+			"INSERT INTO transactions (wallet_id, amount, status, commentary) VALUES ((SELECT vendor_wallet FROM services WHERE services.name=$1), $2, $3, $4)",
+			order.ServiceName, order.Cost, input.Status, fmt.Sprintf("income from %s", order.ServiceName))
+		if err != nil {
+			fmt.Printf("err3: %v", err)
+			return order, err
+		}
 	}
 
 	return order, txn.Commit()

@@ -16,8 +16,8 @@ type InputTransferUsers struct {
 }
 
 type InputBuyServiceUser struct {
-	IDUser      uuid.UUID `json:"id_user"`
-	ServiceName string    `json:"service_name"`
+	IDUser      uuid.UUID `json:"id_user" validate:"required"`
+	ServiceName string    `json:"service_name" validate:"required"`
 	Cost        float64   `json:"cost" validate:"required,gte=0"`
 }
 
@@ -27,4 +27,19 @@ type OutPendingOrder struct {
 	ServiceName string    `json:"service_name"`
 	Status      string    `json:"status"`
 	Txn         uuid.UUID `json:"txn"`
+}
+
+type InputOrderManager struct {
+	IDOrder uuid.UUID `json:"id_order" validate:"required"`
+	IDUser  uuid.UUID `json:"id_user" validate:"required"`
+	Status  string    `json:"status,omitempty"`
+}
+
+type OutOrderManager struct {
+	IDOrder     uuid.UUID `json:"id_order"`
+	Cost        float64   `json:"cost"`
+	ServiceName string    `json:"service_name"`
+	Status      string    `json:"status"`
+	TxnSeller   uuid.UUID `json:"txn_seller"`
+	TxnBuyer    uuid.UUID `json:"txn_buyer"`
 }

@@ -28,6 +28,8 @@ var (
 	ErrUserToNotFound    = errors.New("you want to send money to a user that does not exist")
 	ErrUserBuyer         = errors.New("buyer does not exist")
 	ErrServiceNotFound   = errors.New("service does not exist")
+	ErrOrderNotFound     = errors.New("cannot find order by id with given user id")
+	ErrOrderCompleted    = errors.New("order is already completed")
 )
 
 type HTTPError struct {

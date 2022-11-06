@@ -13,6 +13,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"net/http"
+	"strings"
 )
 
 type Users interface {
@@ -25,6 +26,7 @@ type Users interface {
 	DepositWallet(ctx context.Context, input wallet.InputDeposit) (domain.User, error)
 	CheckAndDoTransfer(ctx context.Context, input wallet.InputTransferUsers) (domain.User, error)
 	BuyServiceUser(ctx context.Context, input wallet.InputBuyServiceUser) (wallet.OutPendingOrder, error)
+	ManageOrder(ctx context.Context, input wallet.InputOrderManager) (wallet.OutOrderManager, error)
 }
 
 type Handler struct {
@@ -50,10 +52,12 @@ func (h *Handler) InitRouter() *echo.Echo {
 
 	walletRoutes.PUT("/deposit", h.DepositToUser)
 	//walletRoutes.PUT("/withdrawal", h.Update)
-	walletRoutes.PUT("/transfer", h.TransferUsers)
-	walletRoutes.POST("/buy", h.BuyServiceUser)
-	//walletRoutes.POST("/approve", h.TransferUsers)
-	//walletRoutes.POST("/decline", h.TransferUsers)
+	orderRoutes := walletRoutes.Group("/order")
+
+	orderRoutes.PUT("/transfer", h.TransferUsers)
+	orderRoutes.POST("/buy", h.BuyServiceUser)
+	orderRoutes.POST("/approve", h.ManageOrder)
+	orderRoutes.POST("/decline", h.ManageOrder)
 
 	//router.Use(middleware.Logger())
 	router.Use(middleware.Recover())
@@ -262,5 +266,39 @@ func (h *Handler) BuyServiceUser(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, map[string]string{
 		"message":  fmt.Sprintf("Created order for %s for %v", order.ServiceName, order.Cost),
 		"order_id": order.ID.String(),
+	})
+}
+
+func (h *Handler) ManageOrder(ctx echo.Context) error {
+	var input wallet.InputOrderManager
+	if err := ctx.Bind(&input); err != nil {
+		log.WithFields(log.Fields{"handler": "ApproveOrder"}).Error(err)
+		return ctx.JSON(http.StatusBadRequest, map[string]string{
+			"message": err.Error(),
+		})
+	}
+	if err := ctx.Validate(&input); err != nil {
+		log.WithFields(log.Fields{"handler": "ApproveOrder"}).Error(err)
+		return ctx.JSON(http.StatusUnprocessableEntity, map[string]string{
+			"message": err.Error(),
+		})
+	}
+	reqUri := strings.Split(ctx.Request().RequestURI, "order/")[1]
+
+	if reqUri == "approve" {
+		input.Status = "approved"
+	} else if reqUri == "decline" {
+		input.Status = "cancelled"
+	}
+	outOrder, err := h.usersService.ManageOrder(ctx.Request().Context(), input)
+	if err != nil {
+		log.WithFields(log.Fields{"handler": "ApproveOrder"}).Error(err)
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{
+			"message": err.Error(),
+		})
+	}
+
+	return ctx.JSON(http.StatusOK, map[string]string{
+		"message": fmt.Sprintf("Order %s", outOrder.Status),
 	})
 }
