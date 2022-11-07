@@ -19,7 +19,7 @@ type UsersRepository interface {
 	BuyServiceUser(ctx context.Context, input wallet.InputBuyServiceUser) (wallet.OutPendingOrder, error)
 	ManageOrder(ctx context.Context, input wallet.InputOrderManager) (wallet.OutOrderManager, error)
 	ReportMonth(ctx context.Context, year, month int) error
-	ReportForUser(ctx context.Context, input domain.InputReportUserTnx) error
+	ReportForUser(ctx context.Context, input domain.InputReportUserTnx) ([]domain.OutputReportUserTnx, error)
 }
 
 type Users struct {
@@ -113,7 +113,15 @@ func (u *Users) BuyServiceUser(ctx context.Context, input wallet.InputBuyService
 func (u *Users) ManageOrder(ctx context.Context, input wallet.InputOrderManager) (wallet.OutOrderManager, error) {
 	manageOrder, err := u.repo.ManageOrder(ctx, input)
 	if err != nil {
-		return wallet.OutOrderManager{}, err
+		return manageOrder, err
 	}
 	return manageOrder, nil
+}
+
+func (u *Users) ReportForUser(ctx context.Context, input domain.InputReportUserTnx) ([]domain.OutputReportUserTnx, error) {
+	reportData, err := u.repo.ReportForUser(ctx, input)
+	if err != nil {
+		return reportData, err
+	}
+	return reportData, nil
 }

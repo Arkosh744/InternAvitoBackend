@@ -27,6 +27,7 @@ type Users interface {
 	CheckAndDoTransfer(ctx context.Context, input wallet.InputTransferUsers) (domain.User, error)
 	BuyServiceUser(ctx context.Context, input wallet.InputBuyServiceUser) (wallet.OutPendingOrder, error)
 	ManageOrder(ctx context.Context, input wallet.InputOrderManager) (wallet.OutOrderManager, error)
+	ReportForUser(ctx context.Context, input domain.InputReportUserTnx) ([]domain.OutputReportUserTnx, error)
 }
 
 type Handler struct {
@@ -47,6 +48,7 @@ func (h *Handler) InitRouter() *echo.Echo {
 	userRoutes := v1.Group("/user")
 	userRoutes.POST("/", h.Create)
 	userRoutes.GET("/:id", h.GetUserBalance)
+	userRoutes.POST("/data", h.GetDataUser)
 
 	walletRoutes := userRoutes.Group("/wallet")
 	walletRoutes.PUT("/deposit", h.DepositToUser)
@@ -58,8 +60,12 @@ func (h *Handler) InitRouter() *echo.Echo {
 	orderRoutes.POST("/buy", h.BuyServiceUser)
 	orderRoutes.POST("/approve", h.ManageOrder)
 	orderRoutes.POST("/decline", h.ManageOrder)
+	orderRoutes.POST("/report", h.ManageOrder)
 
 	//router.Use(middleware.Logger())
+	//router.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+	//	Format: "method=${method}, uri=${uri}, status=${status}\n",
+	//}))
 	router.Use(middleware.Recover())
 
 	return router
@@ -301,4 +307,64 @@ func (h *Handler) ManageOrder(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, map[string]string{
 		"message": fmt.Sprintf("Order %s", outOrder.Status),
 	})
+}
+
+func (h *Handler) GetDataUser(ctx echo.Context) error {
+	var input domain.InputReportUserTnx
+	if err := ctx.Bind(&input); err != nil {
+		log.WithFields(log.Fields{"handler": "ReportDataUser"}).Error(err)
+		return ctx.JSON(http.StatusBadRequest, map[string]string{
+			"message": err.Error(),
+		})
+	}
+	if err := ctx.Validate(&input); err != nil {
+		log.WithFields(log.Fields{"handler": "ReportDataUser"}).Error(err)
+		return ctx.JSON(http.StatusUnprocessableEntity, map[string]string{
+			"message": err.Error(),
+		})
+	}
+
+	report, err := h.usersService.ReportForUser(ctx.Request().Context(), input)
+	if err != nil {
+		log.WithFields(log.Fields{"handler": "ReportDataUser"}).Error(err)
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{
+			"message": err.Error(),
+		})
+	}
+
+	return ctx.JSON(http.StatusOK, map[string]any{
+		"message": fmt.Sprintf("Report for %s", input.IDUser),
+		"report":  report,
+	})
+
+}
+
+func (h *Handler) ReportMonth(ctx echo.Context) error {
+	var input domain.InputReportUserTnx
+	if err := ctx.Bind(&input); err != nil {
+		log.WithFields(log.Fields{"handler": "ReportDataUser"}).Error(err)
+		return ctx.JSON(http.StatusBadRequest, map[string]string{
+			"message": err.Error(),
+		})
+	}
+	if err := ctx.Validate(&input); err != nil {
+		log.WithFields(log.Fields{"handler": "ReportDataUser"}).Error(err)
+		return ctx.JSON(http.StatusUnprocessableEntity, map[string]string{
+			"message": err.Error(),
+		})
+	}
+	//
+	//report, err := h.usersService.ReportDataUser(ctx.Request().Context(), input)
+	//if err != nil {
+	//	log.WithFields(log.Fields{"handler": "ReportDataUser"}).Error(err)
+	//	return ctx.JSON(http.StatusInternalServerError, map[string]string{
+	//		"message": err.Error(),
+	//	})
+	//}
+	//
+	//return ctx.JSON(http.StatusOK, map[string]string{
+	//	"message": fmt.Sprintf("Report for %s", report.Email),
+	//	"report":  report.Report,
+	//})
+	return nil
 }

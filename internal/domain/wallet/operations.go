@@ -43,3 +43,8 @@ type OutOrderManager struct {
 	TxnSeller   uuid.UUID `json:"txn_seller"`
 	TxnBuyer    uuid.UUID `json:"txn_buyer"`
 }
+
+type ReportMonth struct {
+	Amount int
+	Text   string
+}
