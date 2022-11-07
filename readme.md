@@ -1,14 +1,33 @@
-pg docker:
+# Тестовое задание на стажировку Avito Tech Golang Backend Developer
 
-docker run --name avito_intern -e POSTGRES_PASSWORD=docker -p 54322:5432 -d postgres
+[Описание задания](https://github.com/avito-tech/internship_backend_2022)
 
-Swagger docs
-to update need to run command: swag init -g cmd/server/main.go
+*   Задача реализована с помощью фреймворка - Echo
+*   Выполнялось основываясь на принципах Чистой архитектуры
+*   Database - PostgreSQL
+*   Созданы файлы тестов и моков для controller уровня (transport) с использованием go:generate and mockery
+*   Postman файл с примерами запросов включен в репозиторий
+*   Конфигурационный env файл обрабатывается с помощью viper
+*   Сгенерирована swagger документация
+*   Для запуска используется docker-compose
 
-Example of usage: http://localhost:8080/swagger/index.html
+### To run app
+
+Для запуска необходимо создать локальный app.env @ ./configs/app.env файл и затем выполнить в терминале:
+
+```bash
+make run
+```
+
+or
+
+```bash
+docker compose --env-file .\configs\app.env up --build wallet-app
+```
+_____________________________________________________________
 
 
-Реализовано:
+# Реализовано:
 
 1) Метод начисления средств на баланс.
     - Принимает id пользователя / id кошелька / email и сколько средств зачислить.
@@ -38,7 +57,18 @@ Example of usage: http://localhost:8080/swagger/index.html
    - Принимает id пользователя, limit, offset (параметры для пагинации), sort_field(по какому полю сортируем), order(порядок сортировки - ASC / DESC).
    - Возвращает message с user id и report со списком транзакций пользователя согласно критериям.
 
-Вопросы:
+
+# SWAGGER
+
+Swagger docs
+Чтобы обновить документацию используем: swag init -g cmd/server/main.go
+
+Доступен по адресу: http://localhost:8080/swagger/index.html
+
+Пример реализации
+![img.png](misc_files/img.png)
+
+# Вопросы:
 
 1) По умолчанию сервис не содержит в себе никаких данных о балансах (пустая табличка в БД). Данные о балансе появляются
    при первом зачислении денег.
