@@ -8,7 +8,7 @@ import (
 )
 
 type UsersRepository interface {
-	Create(ctx context.Context, user domain.User) (domain.User, error)
+	Create(ctx context.Context, user domain.InputUser) (domain.User, error)
 	GetUserBalance(ctx context.Context, user domain.User) (domain.User, error)
 	CheckUserByEmail(ctx context.Context, email string) (domain.User, error)
 	CheckWalletByUserID(ctx context.Context, uuid uuid.UUID) (domain.User, error)
@@ -32,7 +32,7 @@ func NewUsersService(repo UsersRepository) *Users {
 	}
 }
 
-func (u *Users) Create(ctx context.Context, user domain.User) (domain.User, error) {
+func (u *Users) Create(ctx context.Context, user domain.InputUser) (domain.User, error) {
 	newUserWallet, err := u.repo.Create(ctx, user)
 	if err != nil {
 		return newUserWallet, err

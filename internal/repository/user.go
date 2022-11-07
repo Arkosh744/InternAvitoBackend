@@ -20,11 +20,14 @@ func NewUsers(db *sql.DB) *Users {
 	return &Users{db}
 }
 
-func (u *Users) Create(ctx context.Context, user domain.User) (domain.User, error) {
+func (u *Users) Create(ctx context.Context, user domain.InputUser) (domain.User, error) {
+	newUser := domain.User{FirstName: user.FirstName,
+		LastName: user.LastName,
+		Email:    user.Email}
 	err := u.db.QueryRowContext(ctx,
 		"INSERT INTO users (first_name, last_name, email) values ($1, $2, $3) returning id",
-		user.FirstName, user.LastName, user.Email).Scan(&user.ID)
-	return user, err
+		user.FirstName, user.LastName, user.Email).Scan(&newUser.ID)
+	return newUser, err
 }
 
 func (u *Users) CheckUserByEmail(ctx context.Context, email string) (domain.User, error) {

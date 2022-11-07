@@ -1,0 +1,377 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is Avito Internship Backend Task",
+        "title": "ServiceForUserBalanceOperations API",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {},
+        "version": "0.1"
+    },
+    "host": "localhost:8080",
+    "basePath": "/",
+    "paths": {
+        "/v1/user/": {
+            "post": {
+                "description": "You need create account to use our service",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "account"
+                ],
+                "summary": "Create User",
+                "parameters": [
+                    {
+                        "description": "Create User",
+                        "name": "userInputData",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/domain.InputUser"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v1/user/data": {
+            "post": {
+                "description": "Pagination is available",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Reports"
+                ],
+                "summary": "Get data about transactions for User",
+                "parameters": [
+                    {
+                        "description": "Input User Data And Limits",
+                        "name": "UserDataAndLimits",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/domain.InputReportUserTnx"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v1/user/wallet/": {
+            "put": {
+                "description": "Transfer funds from 1 user to another",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "wallet"
+                ],
+                "summary": "Transfer funds between 2 Users",
+                "parameters": [
+                    {
+                        "description": "Trasfer Input between 2 Users IDs",
+                        "name": "TrasferInput",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/wallet.InputTransferUsers"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v1/user/wallet/buy": {
+            "post": {
+                "description": "Buy Service for User from another -\u003e make \"pending\" order that should be proceeding with /v1/user/wallet/approve or /v1/user/wallet/decline\nInitially we have only 3 services: Dodo Pizza, Yandex Taxi, Yandex Food",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "order"
+                ],
+                "summary": "Buy Service for User from another -\u003e make \"pending\" order",
+                "parameters": [
+                    {
+                        "description": "Buy Service Input",
+                        "name": "InputBuy",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/wallet.InputBuyServiceUser"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v1/user/wallet/deposit": {
+            "put": {
+                "description": "We receive funds, now process it to user wallet. If wallet doesn't exist, we create it\nYou must provide only one of the fields: user_id or email or wallet_id AND amount",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "wallet"
+                ],
+                "summary": "Deposit funds to user",
+                "parameters": [
+                    {
+                        "description": "You must provide only one of the user fields and amount: (user_id || email || wallet_id) \u0026\u0026 amount",
+                        "name": "DepositData",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/wallet.InputDeposit"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v1/user/wallet/order/approve": {
+            "post": {
+                "description": "Approve or Decline order",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "order"
+                ],
+                "summary": "Approve or Decline Order for User depends on endpoint",
+                "parameters": [
+                    {
+                        "description": "Buy Service Input",
+                        "name": "InputBuy",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/wallet.InputBuyServiceUser"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v1/user/wallet/order/decline": {
+            "post": {
+                "description": "Approve or Decline order",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "order"
+                ],
+                "summary": "Approve or Decline Order for User depends on endpoint",
+                "parameters": [
+                    {
+                        "description": "Buy Service Input",
+                        "name": "InputBuy",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/wallet.InputBuyServiceUser"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v1/user/wallet/order/report": {
+            "post": {
+                "description": "Preparing a monthly report for the accounting department",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Reports"
+                ],
+                "summary": "Preparing a monthly report for the accounting department",
+                "parameters": [
+                    {
+                        "description": "Input month and year",
+                        "name": "InputDate",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/wallet.InputReportMonth"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v1/user/{id}": {
+            "get": {
+                "description": "Data about User",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "account"
+                ],
+                "summary": "Get Data about User Balance",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        }
+    },
+    "definitions": {
+        "domain.InputReportUserTnx": {
+            "type": "object",
+            "properties": {
+                "limit": {
+                    "type": "integer"
+                },
+                "offset": {
+                    "type": "integer"
+                },
+                "order": {
+                    "type": "string"
+                },
+                "sort_field": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.InputUser": {
+            "type": "object",
+            "required": [
+                "email",
+                "firstName",
+                "lastName"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "firstName": {
+                    "type": "string",
+                    "minLength": 2
+                },
+                "lastName": {
+                    "type": "string",
+                    "minLength": 2
+                }
+            }
+        },
+        "wallet.InputBuyServiceUser": {
+            "type": "object",
+            "required": [
+                "cost",
+                "id_user",
+                "service_name"
+            ],
+            "properties": {
+                "cost": {
+                    "type": "number",
+                    "minimum": 0
+                },
+                "id_user": {
+                    "type": "string"
+                },
+                "service_name": {
+                    "type": "string"
+                }
+            }
+        },
+        "wallet.InputDeposit": {
+            "type": "object",
+            "required": [
+                "amount"
+            ],
+            "properties": {
+                "amount": {
+                    "type": "number",
+                    "minimum": 0
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id_user": {
+                    "type": "string"
+                },
+                "id_wallet": {
+                    "type": "string"
+                }
+            }
+        },
+        "wallet.InputReportMonth": {
+            "type": "object",
+            "required": [
+                "month",
+                "year"
+            ],
+            "properties": {
+                "month": {
+                    "type": "integer",
+                    "maximum": 12,
+                    "minimum": 1
+                },
+                "year": {
+                    "type": "integer",
+                    "minimum": 2020
+                }
+            }
+        },
+        "wallet.InputTransferUsers": {
+            "type": "object",
+            "required": [
+                "amount",
+                "from_id",
+                "to_id"
+            ],
+            "properties": {
+                "amount": {
+                    "type": "number",
+                    "minimum": 0
+                },
+                "from_id": {
+                    "type": "string"
+                },
+                "to_id": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

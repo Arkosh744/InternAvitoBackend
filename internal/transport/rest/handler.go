@@ -12,12 +12,15 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	echoSwagger "github.com/swaggo/echo-swagger"
 	"net/http"
 	"strings"
+
+	_ "github.com/Arkosh744/InternAvitoBackend/docs"
 )
 
 type Users interface {
-	Create(ctx context.Context, user domain.User) (domain.User, error)
+	Create(ctx context.Context, user domain.InputUser) (domain.User, error)
 	GetUserBalance(ctx context.Context, user domain.User) (domain.User, error)
 	CheckUserByEmail(ctx context.Context, email string) (domain.User, error)
 	CheckWalletByUserID(ctx context.Context, uuid uuid.UUID) (domain.User, error)
@@ -47,6 +50,7 @@ func NewHandler(users Users) *Handler {
 func (h *Handler) InitRouter() *echo.Echo {
 	router := echo.New()
 	router.Validator = validator.NewValidator()
+	router.GET("/swagger/*", echoSwagger.WrapHandler)
 
 	v1 := router.Group("/v1")
 	userRoutes := v1.Group("/user")
@@ -75,8 +79,16 @@ func (h *Handler) InitRouter() *echo.Echo {
 	return router
 }
 
+// Create UserAccount godoc
+// @Summary     Create User
+// @Description You need create account to use our service
+// @Tags        account
+// @Accept      json
+// @Produce     json
+// @Param       userInputData body domain.InputUser true "Create User"
+// @Router      /v1/user/ [post]
 func (h *Handler) Create(ctx echo.Context) error {
-	var userWallet domain.User
+	var userWallet domain.InputUser
 	if err := ctx.Bind(&userWallet); err != nil {
 		log.WithFields(log.Fields{"handler": "Create User"}).Error(err)
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
@@ -114,6 +126,15 @@ func (h *Handler) Create(ctx echo.Context) error {
 	return ctx.JSON(http.StatusCreated, createdUser.ToWebUser())
 }
 
+// DepositToUser Deposit godoc
+// @Summary     Deposit funds to user
+// @Description We receive funds, now process it to user wallet. If wallet doesn't exist, we create it
+// @Description You must provide only one of the fields: user_id or email or wallet_id AND amount
+// @Tags        wallet
+// @Accept      json
+// @Produce     json
+// @Param       DepositData body wallet.InputDeposit true "You must provide only one of the user fields and amount: (user_id || email || wallet_id) && amount"
+// @Router      /v1/user/wallet/deposit [put]
 func (h *Handler) DepositToUser(ctx echo.Context) error {
 	var input wallet.InputDeposit
 	if err := ctx.Bind(&input); err != nil {
@@ -189,10 +210,20 @@ func (h *Handler) DepositToUser(ctx echo.Context) error {
 	})
 }
 
+// GetUserBalance Balance godoc
+// @Summary     Get Data about User Balance
+// @Description Data about User
+// @Tags        account
+// @Accept      json
+// @Produce     json
+// @Param       id path string true "User UUID"
+// @Router      /v1/user/{id} [GET]
 func (h *Handler) GetUserBalance(ctx echo.Context) error {
 	var user domain.User
 	var err error
 	user.ID, err = uuid.Parse(ctx.Param("id"))
+	log.Println(user.ID)
+	log.Println(ctx.Request().RequestURI)
 	if err != nil {
 		log.WithFields(log.Fields{"handler": "GetUserBalance"}).Error(err)
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
@@ -211,11 +242,19 @@ func (h *Handler) GetUserBalance(ctx echo.Context) error {
 	}
 
 	return ctx.JSON(http.StatusOK, map[string]string{
-		"message": fmt.Sprintf("%s balance", user.Email),
+		"message": fmt.Sprintf("Balance of %s", user.Email),
 		"balance": fmt.Sprintf("%v", user.Wallet.Balance),
 	})
 }
 
+// TransferUsers Transfer godoc
+// @Summary     Transfer funds between 2 Users
+// @Description Transfer funds from 1 user to another
+// @Tags        wallet
+// @Accept      json
+// @Produce     json
+// @Param       TrasferInput body wallet.InputTransferUsers true "Trasfer Input between 2 Users IDs"
+// @Router      /v1/user/wallet/ [PUT]
 func (h *Handler) TransferUsers(ctx echo.Context) error {
 	var input wallet.InputTransferUsers
 	if err := ctx.Bind(&input); err != nil {
@@ -251,6 +290,15 @@ func (h *Handler) TransferUsers(ctx echo.Context) error {
 	})
 }
 
+// BuyServiceUser Services godoc
+// @Summary     Buy Service for User from another -> make "pending" order
+// @Description Buy Service for User from another -> make "pending" order that should be proceeding with /v1/user/wallet/approve or /v1/user/wallet/decline
+// @Description Initially we have only 3 services: Dodo Pizza, Yandex Taxi, Yandex Food
+// @Tags        order
+// @Accept      json
+// @Produce     json
+// @Param       InputBuy body wallet.InputBuyServiceUser true "Buy Service Input"
+// @Router      /v1/user/wallet/buy [POST]
 func (h *Handler) BuyServiceUser(ctx echo.Context) error {
 	var input wallet.InputBuyServiceUser
 	if err := ctx.Bind(&input); err != nil {
@@ -279,6 +327,15 @@ func (h *Handler) BuyServiceUser(ctx echo.Context) error {
 	})
 }
 
+// ManageOrder Manage godoc
+// @Summary     Approve or Decline Order for User depends on endpoint
+// @Description Approve or Decline order
+// @Tags        order
+// @Accept      json
+// @Produce     json
+// @Param       InputBuy body wallet.InputBuyServiceUser true "Buy Service Input"
+// @Router      /v1/user/wallet/order/approve [POST]
+// @Router      /v1/user/wallet/order/decline [POST]
 func (h *Handler) ManageOrder(ctx echo.Context) error {
 	var input wallet.InputOrderManager
 	if err := ctx.Bind(&input); err != nil {
@@ -313,6 +370,14 @@ func (h *Handler) ManageOrder(ctx echo.Context) error {
 	})
 }
 
+// GetDataUser Report godoc
+// @Summary     Get data about transactions for User
+// @Description Pagination is available
+// @Tags        Reports
+// @Accept      json
+// @Produce     json
+// @Param       UserDataAndLimits body domain.InputReportUserTnx true "Input User Data And Limits"
+// @Router      /v1/user/data [POST]
 func (h *Handler) GetDataUser(ctx echo.Context) error {
 	var input domain.InputReportUserTnx
 	if err := ctx.Bind(&input); err != nil {
@@ -343,6 +408,14 @@ func (h *Handler) GetDataUser(ctx echo.Context) error {
 
 }
 
+// ReportMonth Report godoc
+// @Summary     Preparing a monthly report for the accounting department
+// @Description Preparing a monthly report for the accounting department
+// @Tags        Reports
+// @Accept      json
+// @Produce     json
+// @Param       InputDate body wallet.InputReportMonth true "Input month and year"
+// @Router      /v1/user/wallet/order/report [POST]
 func (h *Handler) ReportMonth(ctx echo.Context) error {
 	var input wallet.InputReportMonth
 	if err := ctx.Bind(&input); err != nil {

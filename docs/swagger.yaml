@@ -1,0 +1,260 @@
+basePath: /
+definitions:
+  domain.InputReportUserTnx:
+    properties:
+      limit:
+        type: integer
+      offset:
+        type: integer
+      order:
+        type: string
+      sort_field:
+        type: string
+      user_id:
+        type: string
+    type: object
+  domain.InputUser:
+    properties:
+      email:
+        type: string
+      firstName:
+        minLength: 2
+        type: string
+      lastName:
+        minLength: 2
+        type: string
+    required:
+    - email
+    - firstName
+    - lastName
+    type: object
+  wallet.InputBuyServiceUser:
+    properties:
+      cost:
+        minimum: 0
+        type: number
+      id_user:
+        type: string
+      service_name:
+        type: string
+    required:
+    - cost
+    - id_user
+    - service_name
+    type: object
+  wallet.InputDeposit:
+    properties:
+      amount:
+        minimum: 0
+        type: number
+      email:
+        type: string
+      id_user:
+        type: string
+      id_wallet:
+        type: string
+    required:
+    - amount
+    type: object
+  wallet.InputReportMonth:
+    properties:
+      month:
+        maximum: 12
+        minimum: 1
+        type: integer
+      year:
+        minimum: 2020
+        type: integer
+    required:
+    - month
+    - year
+    type: object
+  wallet.InputTransferUsers:
+    properties:
+      amount:
+        minimum: 0
+        type: number
+      from_id:
+        type: string
+      to_id:
+        type: string
+    required:
+    - amount
+    - from_id
+    - to_id
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: This is Avito Internship Backend Task
+  termsOfService: http://swagger.io/terms/
+  title: ServiceForUserBalanceOperations API
+  version: "0.1"
+paths:
+  /v1/user/:
+    post:
+      consumes:
+      - application/json
+      description: You need create account to use our service
+      parameters:
+      - description: Create User
+        in: body
+        name: userInputData
+        required: true
+        schema:
+          $ref: '#/definitions/domain.InputUser'
+      produces:
+      - application/json
+      responses: {}
+      summary: Create User
+      tags:
+      - account
+  /v1/user/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Data about User
+      parameters:
+      - description: User UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      summary: Get Data about User Balance
+      tags:
+      - account
+  /v1/user/data:
+    post:
+      consumes:
+      - application/json
+      description: Pagination is available
+      parameters:
+      - description: Input User Data And Limits
+        in: body
+        name: UserDataAndLimits
+        required: true
+        schema:
+          $ref: '#/definitions/domain.InputReportUserTnx'
+      produces:
+      - application/json
+      responses: {}
+      summary: Get data about transactions for User
+      tags:
+      - Reports
+  /v1/user/wallet/:
+    put:
+      consumes:
+      - application/json
+      description: Transfer funds from 1 user to another
+      parameters:
+      - description: Trasfer Input between 2 Users IDs
+        in: body
+        name: TrasferInput
+        required: true
+        schema:
+          $ref: '#/definitions/wallet.InputTransferUsers'
+      produces:
+      - application/json
+      responses: {}
+      summary: Transfer funds between 2 Users
+      tags:
+      - wallet
+  /v1/user/wallet/buy:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Buy Service for User from another -> make "pending" order that should be proceeding with /v1/user/wallet/approve or /v1/user/wallet/decline
+        Initially we have only 3 services: Dodo Pizza, Yandex Taxi, Yandex Food
+      parameters:
+      - description: Buy Service Input
+        in: body
+        name: InputBuy
+        required: true
+        schema:
+          $ref: '#/definitions/wallet.InputBuyServiceUser'
+      produces:
+      - application/json
+      responses: {}
+      summary: Buy Service for User from another -> make "pending" order
+      tags:
+      - order
+  /v1/user/wallet/deposit:
+    put:
+      consumes:
+      - application/json
+      description: |-
+        We receive funds, now process it to user wallet. If wallet doesn't exist, we create it
+        You must provide only one of the fields: user_id or email or wallet_id AND amount
+      parameters:
+      - description: 'You must provide only one of the user fields and amount: (user_id
+          || email || wallet_id) && amount'
+        in: body
+        name: DepositData
+        required: true
+        schema:
+          $ref: '#/definitions/wallet.InputDeposit'
+      produces:
+      - application/json
+      responses: {}
+      summary: Deposit funds to user
+      tags:
+      - wallet
+  /v1/user/wallet/order/approve:
+    post:
+      consumes:
+      - application/json
+      description: Approve or Decline order
+      parameters:
+      - description: Buy Service Input
+        in: body
+        name: InputBuy
+        required: true
+        schema:
+          $ref: '#/definitions/wallet.InputBuyServiceUser'
+      produces:
+      - application/json
+      responses: {}
+      summary: Approve or Decline Order for User depends on endpoint
+      tags:
+      - order
+  /v1/user/wallet/order/decline:
+    post:
+      consumes:
+      - application/json
+      description: Approve or Decline order
+      parameters:
+      - description: Buy Service Input
+        in: body
+        name: InputBuy
+        required: true
+        schema:
+          $ref: '#/definitions/wallet.InputBuyServiceUser'
+      produces:
+      - application/json
+      responses: {}
+      summary: Approve or Decline Order for User depends on endpoint
+      tags:
+      - order
+  /v1/user/wallet/order/report:
+    post:
+      consumes:
+      - application/json
+      description: Preparing a monthly report for the accounting department
+      parameters:
+      - description: Input month and year
+        in: body
+        name: InputDate
+        required: true
+        schema:
+          $ref: '#/definitions/wallet.InputReportMonth'
+      produces:
+      - application/json
+      responses: {}
+      summary: Preparing a monthly report for the accounting department
+      tags:
+      - Reports
+swagger: "2.0"

@@ -16,15 +16,6 @@ import (
 	"time"
 )
 
-// @title ServiceForUserBalanceOperations API
-// @version 0.1
-// @description This is Avito Internship Backend Task
-
-// @host localhost:8080
-// @BasePath /
-
-// @termsOfService http://swagger.io/terms/
-// @host localhost:8080
 func Run() error {
 	cfg, err := config.New("configs")
 	if err != nil {
