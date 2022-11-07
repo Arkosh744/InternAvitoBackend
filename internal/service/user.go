@@ -12,12 +12,15 @@ type UsersRepository interface {
 	GetUserBalance(ctx context.Context, user domain.User) (domain.User, error)
 	CheckUserByEmail(ctx context.Context, email string) (domain.User, error)
 	CheckWalletByUserID(ctx context.Context, uuid uuid.UUID) (domain.User, error)
-	CheckWalletByEmail(ctx context.Context, email string) (domain.User, error)
+	CheckWalletByEmail(ctx context.Context, user string) (domain.User, error)
+
 	CreateWallet(ctx context.Context, input wallet.InputDeposit) (domain.User, error)
 	DepositWallet(ctx context.Context, input wallet.InputDeposit) (domain.User, error)
+
 	CheckAndDoTransfer(ctx context.Context, input wallet.InputTransferUsers) (domain.User, error)
 	BuyServiceUser(ctx context.Context, input wallet.InputBuyServiceUser) (wallet.OutPendingOrder, error)
 	ManageOrder(ctx context.Context, input wallet.InputOrderManager) (wallet.OutOrderManager, error)
+
 	ReportMonth(ctx context.Context, input wallet.InputReportMonth) ([]wallet.ReportMonth, error)
 	ReportForUser(ctx context.Context, input domain.InputReportUserTnx) ([]domain.OutputReportUserTnx, error)
 }
