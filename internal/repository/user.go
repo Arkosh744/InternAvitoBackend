@@ -3,10 +3,13 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"fmt"
 	"github.com/Arkosh744/InternAvitoBackend/internal/domain"
 	"github.com/Arkosh744/InternAvitoBackend/internal/domain/wallet"
 	"github.com/Arkosh744/InternAvitoBackend/pkg/lib/types"
 	"github.com/google/uuid"
+	"time"
 )
 
 type Users struct {
@@ -17,11 +20,14 @@ func NewUsers(db *sql.DB) *Users {
 	return &Users{db}
 }
 
-func (u *Users) Create(ctx context.Context, user domain.User) (domain.User, error) {
+func (u *Users) Create(ctx context.Context, user domain.InputUser) (domain.User, error) {
+	newUser := domain.User{FirstName: user.FirstName,
+		LastName: user.LastName,
+		Email:    user.Email}
 	err := u.db.QueryRowContext(ctx,
 		"INSERT INTO users (first_name, last_name, email) values ($1, $2, $3) returning id",
-		user.FirstName, user.LastName, user.Email).Scan(&user.ID)
-	return user, err
+		user.FirstName, user.LastName, user.Email).Scan(&newUser.ID)
+	return newUser, err
 }
 
 func (u *Users) CheckUserByEmail(ctx context.Context, email string) (domain.User, error) {
@@ -63,9 +69,8 @@ func (u *Users) DepositWallet(ctx context.Context, input wallet.InputDeposit) (d
 	defer func() {
 		_ = txn.Rollback()
 	}()
-
 	err = txn.QueryRowContext(ctx,
-		"UPDATE wallets SET balance=wallets.balance+$1 FROM users INNER JOIN wallets w on w.id = users.wallet WHERE wallets.id=$2 RETURNING wallets.id, wallets.balance, email",
+		"UPDATE wallets w1 SET balance=w1.balance+$1 FROM wallets w2 INNER JOIN users on users.wallet = w2.id WHERE users.wallet=$2 AND w1.id =w2.id RETURNING w1.id, w1.balance, users.email",
 		input.Amount, input.IDWallet).
 		Scan(&user.Wallet.ID, &user.Wallet.Balance, &user.Email)
 	if err != nil {
@@ -170,7 +175,7 @@ func (u *Users) CheckAndDoTransfer(ctx context.Context, input wallet.InputTransf
 		input.Amount, toUser.Wallet.ID).Scan(&toUser.Wallet.Balance)
 
 	_, err = txn.ExecContext(ctx, "INSERT INTO transactions (wallet_id, amount, status, commentary) values ($1, $2, $3, $4)",
-		fromUser.Wallet.ID, input.Amount, "approved", "payment send to user")
+		fromUser.Wallet.ID, -input.Amount, "approved", "payment send to user")
 	_, err = txn.ExecContext(ctx, "INSERT INTO transactions (wallet_id, amount, status, commentary) values ($1, $2, $3, $4)",
 		toUser.Wallet.ID, input.Amount, "approved", "payment received from user")
 	if err != nil {
@@ -178,4 +183,185 @@ func (u *Users) CheckAndDoTransfer(ctx context.Context, input wallet.InputTransf
 	}
 
 	return toUser, txn.Commit()
+}
+
+func (u *Users) BuyServiceUser(ctx context.Context, input wallet.InputBuyServiceUser) (wallet.OutPendingOrder, error) {
+	var user domain.User
+	var order wallet.OutPendingOrder
+
+	txn, err := u.db.BeginTx(ctx, nil)
+	if err != nil {
+		return order, err
+	}
+	defer func() {
+		_ = txn.Rollback()
+	}()
+
+	err = txn.QueryRowContext(ctx,
+		"SELECT wallets.id, balance FROM wallets INNER JOIN users u on wallets.id=u.wallet WHERE u.id=$1",
+		input.IDUser).Scan(&user.Wallet.ID, &user.Wallet.Balance)
+	if err == sql.ErrNoRows {
+		return order, types.ErrUserBuyer
+	} else if user.Wallet.Balance < input.Cost {
+		return order, types.ErrInsufficientFunds
+	}
+	err = txn.QueryRowContext(ctx,
+		"UPDATE wallets SET balance=wallets.balance-$1, reserved=wallets.reserved+$1 WHERE id=$2 RETURNING balance",
+		input.Cost, user.Wallet.ID).Scan(&user.Wallet.Balance)
+	if err != nil {
+		return order, err
+	}
+	err = txn.QueryRowContext(ctx, "INSERT INTO transactions (wallet_id, amount, status, commentary) VALUES ($1, $2, $3, $4) RETURNING id",
+		user.Wallet.ID, -input.Cost, "pending", fmt.Sprintf("payment for %s", input.ServiceName)).Scan(&order.Txn)
+
+	err = txn.QueryRowContext(ctx,
+		"INSERT INTO orders (user_id, service, price, status, transaction_id) VALUES ($1, $2, $3, $4, $5) RETURNING id, status",
+		input.IDUser, input.ServiceName, input.Cost, "created", order.Txn).Scan(&order.ID, &order.Status)
+
+	if err != nil {
+		if err.Error() == `pq: insert or update on table "orders" violates foreign key constraint "service_fk"` {
+			return wallet.OutPendingOrder{}, types.ErrServiceNotFound
+		} else {
+			return wallet.OutPendingOrder{}, err
+		}
+	}
+	order.Cost = input.Cost
+	order.ServiceName = input.ServiceName
+
+	if err != nil {
+		return wallet.OutPendingOrder{}, err
+	}
+
+	return order, txn.Commit()
+}
+
+func (u *Users) ManageOrder(ctx context.Context, input wallet.InputOrderManager) (wallet.OutOrderManager, error) {
+	var order wallet.OutOrderManager
+	var orderStatusCurrent string
+
+	if input.Status == "approved" {
+		order.Status = "completed"
+	} else {
+		order.Status = "canceled"
+	}
+
+	txn, err := u.db.BeginTx(ctx, nil)
+	if err != nil {
+		return order, err
+	}
+	defer func() {
+		_ = txn.Rollback()
+	}()
+
+	// Проверяем, что заказ существует
+	err = txn.QueryRowContext(ctx,
+		"SELECT status, transaction_id, price, service FROM orders WHERE id=$1 AND user_id=$2", input.IDOrder, input.IDUser).
+		Scan(&orderStatusCurrent, &order.TxnBuyer, &order.Cost, &order.ServiceName)
+
+	if err == sql.ErrNoRows {
+		return order, types.ErrOrderNotFound
+	} else if orderStatusCurrent == "completed" || orderStatusCurrent == "canceled" {
+		return order, types.ErrOrderCompleted
+	}
+	// Проверяем, что транзакция существует и обновляем статус
+	_, err = txn.ExecContext(ctx,
+		"UPDATE transactions SET status=$1 WHERE id=$2",
+		input.Status, order.TxnBuyer)
+	if err != nil {
+		return order, err
+	}
+
+	// Обновляем статус заказа
+	_, err = txn.ExecContext(ctx,
+		"UPDATE orders SET status=$1, updated_at=$2 WHERE id=$3",
+		order.Status, time.Now(), input.IDOrder)
+	if err != nil {
+		return order, err
+	}
+
+	if input.Status == "canceled" {
+		// Если заказ отклонен, то возвращаем деньги на счет и убираем резерв
+		_, err = txn.ExecContext(ctx,
+			"UPDATE wallets SET balance=wallets.balance+$1, reserved=wallets.reserved-$1 WHERE (SELECT wallet FROM users WHERE users.id=$2)=wallets.id",
+			order.Cost, input.IDUser)
+		if err != nil {
+			return order, err
+		}
+
+	} else if input.Status == "approved" {
+		// Если заказ одобрен, то списываем деньги с резерва
+		_, err = txn.ExecContext(ctx,
+			"UPDATE wallets SET reserved=wallets.reserved-$1 WHERE (SELECT wallet FROM users WHERE users.id=$2)=wallets.id",
+			order.Cost, input.IDUser)
+		if err != nil {
+			return order, err
+		}
+
+		// Добавляем деньги продавцу на счет
+		_, err = txn.ExecContext(ctx,
+			"UPDATE wallets SET balance=wallets.balance+$1 WHERE (SELECT vendor_wallet FROM services WHERE services.name=$2)=wallets.id",
+			order.Cost, order.ServiceName)
+		if err != nil {
+			return order, err
+		}
+
+		// Создаем транзакцию продавцу
+		_, err = txn.ExecContext(ctx,
+			"INSERT INTO transactions (wallet_id, amount, status, commentary) VALUES ((SELECT vendor_wallet FROM services WHERE services.name=$1), $2, $3, $4)",
+			order.ServiceName, order.Cost, input.Status, fmt.Sprintf("income from %s", order.ServiceName))
+		if err != nil {
+			return order, err
+		}
+	}
+
+	return order, txn.Commit()
+}
+
+func (u *Users) ReportMonth(ctx context.Context, input wallet.InputReportMonth) ([]wallet.ReportMonth, error) {
+	var r wallet.ReportMonth
+	var reportData []wallet.ReportMonth
+
+	rows, err := u.db.QueryContext(ctx,
+		"SELECT commentary, sum(amount) FROM transactions WHERE status='approved' AND commentary LIKE '%income%' AND EXTRACT(MONTH FROM created_at)=$1 AND EXTRACT(YEAR FROM created_at)=$2 GROUP BY commentary;",
+		input.Month, input.Year)
+	if err != nil {
+		return reportData, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		if err := rows.Scan(&r.Text, &r.Amount); err != nil {
+			return reportData, err
+		}
+		reportData = append(reportData, r)
+	}
+	if len(reportData) == 0 {
+		return reportData, errors.New(fmt.Sprintf("No data for %s %s", input.Month, input.Year))
+	}
+
+	return reportData, nil
+}
+
+func (u *Users) ReportForUser(ctx context.Context, input domain.InputReportUserTnx) ([]domain.OutputReportUserTnx, error) {
+	var reportData []domain.OutputReportUserTnx
+	query := fmt.Sprintf("SELECT created_at, commentary, amount FROM transactions WHERE wallet_id = (SELECT wallet FROM users WHERE users.id=$1) ORDER BY %s %s LIMIT $2 OFFSET $3", input.SortField, input.Order)
+	rows, err := u.db.QueryContext(ctx, query, input.IDUser, input.Limit, input.Offset)
+	if err != nil {
+		return []domain.OutputReportUserTnx{}, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var r domain.OutputReportUserTnx
+		if err := rows.Scan(&r.Date, &r.Commentary, &r.Amount); err != nil {
+			return []domain.OutputReportUserTnx{}, err
+		}
+		reportData = append(reportData, r)
+	}
+
+	if len(reportData) == 0 {
+		return []domain.OutputReportUserTnx{}, nil
+	}
+
+	return reportData, nil
 }

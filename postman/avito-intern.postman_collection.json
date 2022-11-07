@@ -1,0 +1,399 @@
+{
+	"info": {
+		"_postman_id": "9c343b22-c5b7-4254-8a9f-9c6573ec92d0",
+		"name": "avito-intern",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "15237781"
+	},
+	"item": [
+		{
+			"name": "user",
+			"item": [
+				{
+					"name": "wallet",
+					"item": [
+						{
+							"name": "order",
+							"item": [
+								{
+									"name": "Buy",
+									"request": {
+										"auth": {
+											"type": "noauth"
+										},
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n    \"id_user\": \"afda1a6f-01bc-46a8-97d1-39efd0a72c2d\",\r\n    \"service_name\": \"Dodo Pizza\",\r\n    \"cost\": 22\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{host}}/v1/user/wallet/order/buy",
+											"host": [
+												"{{host}}"
+											],
+											"path": [
+												"v1",
+												"user",
+												"wallet",
+												"order",
+												"buy"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Approve",
+									"request": {
+										"auth": {
+											"type": "noauth"
+										},
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n    \"id_user\": \"41e62032-b025-4877-bf38-008652c04afa\",\r\n    \"id_order\": \"b50c05e2-977c-40c5-a941-67f415db3577\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{host}}/v1/user/wallet/order/approve",
+											"host": [
+												"{{host}}"
+											],
+											"path": [
+												"v1",
+												"user",
+												"wallet",
+												"order",
+												"approve"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Report",
+									"request": {
+										"auth": {
+											"type": "noauth"
+										},
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n    \"year\": 2022,\r\n    \"month\": 11\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{host}}/v1/user/wallet/order/report",
+											"host": [
+												"{{host}}"
+											],
+											"path": [
+												"v1",
+												"user",
+												"wallet",
+												"order",
+												"report"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Decline",
+									"request": {
+										"auth": {
+											"type": "noauth"
+										},
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n    \"id_user\": \"41e62032-b025-4877-bf38-008652c04afa\",\r\n    \"id_order\": \"e688da1f-0f68-45f1-91a8-7a2533bf928e\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{host}}/v1/user/wallet/order/decline",
+											"host": [
+												"{{host}}"
+											],
+											"path": [
+												"v1",
+												"user",
+												"wallet",
+												"order",
+												"decline"
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Deposit_id_user",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"id_user\": \"41e62032-b025-4877-bf38-008652c04afa\",\r\n    \"amount\": 555\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/v1/user/wallet/deposit",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"v1",
+										"user",
+										"wallet",
+										"deposit"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "transfer",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"from_id\": \"6297e304-133a-4c03-9405-6c6f955f5b5a\",\r\n    \"to_id\": \"1a21ad5a-8452-4673-b63f-1109b0c491cf\",\r\n    \"amount\": 44\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/v1/user/wallet/transfer",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"v1",
+										"user",
+										"wallet",
+										"transfer"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Deposit_email",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"email\": \"ssad2@gmail.com\",\r\n    \"amount\": 100\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/v1/user/wallet/deposit",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"v1",
+										"user",
+										"wallet",
+										"deposit"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "create_user",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"firstName\": \"Kirill\",\r\n    \"lastName\": \"Kot\",\r\n    \"email\": \"ssad2@gmail.com\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/v1/user/",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"v1",
+								"user",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "data",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"user_id\": \"afda1a6f-01bc-46a8-97d1-39efd0a72c2d\",\r\n    \"limit\": 225,\r\n    \"offset\": 0,\r\n    \"order\": \"DESC\",\r\n    \"sort_field\": \"amount\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/v1/user/data",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"v1",
+								"user",
+								"data"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get_user_balance",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"id\": 4,\r\n    \"title\": \"heill\",\r\n    \"body\": \"asd text here\"\r\n}"
+						},
+						"url": {
+							"raw": "{{host}}/v1/user/1a21ad5a-8452-4673-b63f-1109b0c491cf",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"v1",
+								"user",
+								"1a21ad5a-8452-4673-b63f-1109b0c491cf"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "File",
+			"item": [
+				{
+					"name": "upload",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"contentType": "",
+									"type": "file",
+									"src": "/E:/Downloads/gopher (1).png"
+								},
+								{
+									"key": "json",
+									"value": "{\"name\": \"bobki\"}",
+									"contentType": "application/json",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{host}}/file",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"file"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "auth_token",
+			"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2NjI4NDAxMzUsImlhdCI6MTY2Mjc1MzczNSwic3ViIjoiMyJ9.Ka_ucaAgZBgO-YhW-UdNjsSjUVA1SHBJDZrknwfb8NQ"
+		}
+	]
+}

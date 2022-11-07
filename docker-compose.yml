@@ -1,0 +1,40 @@
+version: '3.5'
+
+services:
+  wallet-app:
+    container_name: wallet-rest-app
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    restart: always
+    command: ./wallet-app
+    env_file:
+      - "./configs/app.env"
+    volumes:
+      - .:/src
+    ports:
+      - "8080:8080"
+    networks:
+      - wallet_network
+    depends_on:
+      - db
+
+  db:
+    container_name: postgres
+    restart: always
+    image: postgres:latest
+    hostname: postgres-db
+    volumes:
+      - ./schemes/postgres/up:/docker-entrypoint-initdb.d/
+    environment:
+      - POSTGRES_NAME=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=docker
+    ports:
+      - "54322:5432"
+    networks:
+      - wallet_network
+
+networks:
+  wallet_network:
+    driver: bridge

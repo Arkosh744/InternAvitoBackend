@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS transaction_statuses
 INSERT INTO transaction_statuses (status)
 VALUES ('pending'),
        ('approved'),
-       ('rejected');
+       ('cancelled');
 
 ALTER TABLE users
     ADD CONSTRAINT users_wallet_fk FOREIGN KEY (wallet) REFERENCES wallets (id) ON DELETE CASCADE;
@@ -51,7 +51,7 @@ ALTER TABLE transactions
 CREATE TABLE IF NOT EXISTS services
 (
     id            serial PRIMARY KEY NOT NULL,
-    name          varchar(255)       NOT NULL,
+    name          varchar(255)       NOT NULL UNIQUE,
     vendor_wallet uuid               NOT NULL,
     created_at    timestamp          NOT NULL DEFAULT NOW(),
     updated_at    timestamp          NOT NULL DEFAULT NOW()
@@ -62,30 +62,32 @@ ALTER TABLE services
 
 CREATE TABLE IF NOT EXISTS orders
 (
-    id         uuid PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
-    user_id    uuid             NOT NULL,
-    service_id serial           NOT NULL,
-    amount     numeric          NOT NULL,
-    status     serial           NOT NULL,
-    created_at timestamp        NOT NULL DEFAULT NOW(),
-    updated_at timestamp        NOT NULL DEFAULT NOW()
+    id             uuid PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
+    user_id        uuid             NOT NULL,
+    service        varchar(255)     NOT NULL,
+    price          numeric          NOT NULL,
+    status         varchar(255)     NOT NULL,
+    transaction_id uuid             NOT NULL,
+    created_at     timestamp        NOT NULL DEFAULT NOW(),
+    updated_at     timestamp        NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS order_statuses
 (
     id     serial PRIMARY KEY NOT NULL,
-    status varchar(255)       NOT NULL
+    status varchar(255)       NOT NULL UNIQUE
 );
 
 INSERT INTO order_statuses (status)
 VALUES ('created'),
-       ('in_progress'),
+       ('canceled'),
        ('completed');
 
 ALTER TABLE orders
-    ADD CONSTRAINT status_fk FOREIGN KEY (status) REFERENCES order_statuses (id) ON DELETE CASCADE,
-    ADD CONSTRAINT service_id_fk FOREIGN KEY (service_id) REFERENCES services (id) ON DELETE CASCADE,
-    ADD CONSTRAINT user_id_fk FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE;
+    ADD CONSTRAINT status_fk FOREIGN KEY (status) REFERENCES order_statuses (status) ON DELETE CASCADE,
+    ADD CONSTRAINT service_fk FOREIGN KEY (service) REFERENCES services (name) ON DELETE CASCADE,
+    ADD CONSTRAINT user_id_fk FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+    ADD CONSTRAINT transaction_id_fk FOREIGN KEY (transaction_id) REFERENCES transactions (id) ON DELETE CASCADE;
 
 INSERT INTO wallets (id, balance, reserved)
 VALUES ('1490b303-5e0e-476a-806c-7139a201c446', 0, 0),
@@ -101,3 +103,12 @@ INSERT INTO services (name, vendor_wallet)
 VALUES ('Dodo Pizza', '1490b303-5e0e-476a-806c-7139a201c446'),
        ('Yandex Taxi', '74231c9d-ede1-4e03-9b77-2133316b1771'),
        ('Yandex Food', 'aece5045-47ff-4ae5-99e6-9dd4bc4559cb');
+
+CREATE TABLE IF NOT EXISTS income_reports
+(
+    id         uuid PRIMARY KEY NOT NULL,
+    service    varchar(255)     NOT NULL,
+    amount     numeric          NOT NULL,
+    created_at timestamp        NOT NULL DEFAULT NOW(),
+    updated_at timestamp        NOT NULL DEFAULT NOW()
+);

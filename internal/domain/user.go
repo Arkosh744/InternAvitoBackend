@@ -16,7 +16,13 @@ type User struct {
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 
-type WebtUser struct {
+type InputUser struct {
+	FirstName string `json:"firstName" validate:"required,gte=2"`
+	LastName  string `json:"lastName" validate:"required,gte=2"`
+	Email     string `json:"email" validate:"required,email"`
+}
+
+type WebUser struct {
 	ID        uuid.UUID `json:"id"`
 	FirstName string    `json:"firstName"`
 	LastName  string    `json:"lastName"`
@@ -40,8 +46,8 @@ type Wallet struct {
 	UpdatedAt    time.Time            `json:"updatedAt"`
 }
 
-func (User *User) ToWebUser() *WebtUser {
-	return &WebtUser{
+func (User *User) ToWebUser() *WebUser {
+	return &WebUser{
 		ID:        User.ID,
 		FirstName: User.FirstName,
 		LastName:  User.LastName,
@@ -56,4 +62,18 @@ func (User *User) ToWebWalletUser() *WebUserWalletBalance {
 		Balance:   User.Wallet.Balance,
 		Reserved:  User.Wallet.Reserved,
 	}
+}
+
+type InputReportUserTnx struct {
+	IDUser    uuid.UUID `json:"user_id"`
+	Limit     int       `json:"limit"`
+	Offset    int       `json:"offset"`
+	Order     string    `json:"order"`
+	SortField string    `json:"sort_field"`
+}
+
+type OutputReportUserTnx struct {
+	Date       time.Time
+	Commentary string
+	Amount     float64
 }
