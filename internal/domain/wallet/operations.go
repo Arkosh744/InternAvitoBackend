@@ -44,6 +44,11 @@ type OutOrderManager struct {
 	TxnBuyer    uuid.UUID `json:"txn_buyer"`
 }
 
+type InputReportMonth struct {
+	Year  int `json:"year" validate:"required,gte=2020"`
+	Month int `json:"month" validate:"required,gte=1,lte=12"`
+}
+
 type ReportMonth struct {
 	Amount int
 	Text   string

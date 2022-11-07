@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/Arkosh744/InternAvitoBackend/internal/domain"
 	"github.com/Arkosh744/InternAvitoBackend/internal/domain/wallet"
@@ -313,36 +314,34 @@ func (u *Users) ManageOrder(ctx context.Context, input wallet.InputOrderManager)
 	return order, txn.Commit()
 }
 
-func (u *Users) ReportMonth(ctx context.Context, year, month int) error {
+func (u *Users) ReportMonth(ctx context.Context, input wallet.InputReportMonth) ([]wallet.ReportMonth, error) {
 	var r wallet.ReportMonth
 	var reportData []wallet.ReportMonth
 
 	rows, err := u.db.QueryContext(ctx,
 		"SELECT commentary, sum(amount) FROM transactions WHERE status='approved' AND commentary LIKE '%income%' AND EXTRACT(MONTH FROM created_at)=$1 AND EXTRACT(YEAR FROM created_at)=$2 GROUP BY commentary;",
-		month, year)
+		input.Month, input.Year)
 	if err != nil {
-		return err
+		return reportData, err
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		if err := rows.Scan(&r.Text, &r.Amount); err != nil {
-			return err
+			return reportData, err
 		}
 		reportData = append(reportData, r)
 	}
 	if len(reportData) == 0 {
-		fmt.Printf("No data for %d-%d", year, month)
-		return nil
+		return reportData, errors.New(fmt.Sprintf("No data for %s %s", input.Month, input.Year))
 	}
 
-	return nil
+	return reportData, nil
 }
 
 func (u *Users) ReportForUser(ctx context.Context, input domain.InputReportUserTnx) ([]domain.OutputReportUserTnx, error) {
 	var reportData []domain.OutputReportUserTnx
 	query := fmt.Sprintf("SELECT created_at, commentary, amount FROM transactions WHERE wallet_id = (SELECT wallet FROM users WHERE users.id=$1) ORDER BY %s %s LIMIT $2 OFFSET $3", input.SortField, input.Order)
-	fmt.Println(query)
 	rows, err := u.db.QueryContext(ctx, query, input.IDUser, input.Limit, input.Offset)
 	if err != nil {
 		return []domain.OutputReportUserTnx{}, err
@@ -354,12 +353,10 @@ func (u *Users) ReportForUser(ctx context.Context, input domain.InputReportUserT
 		if err := rows.Scan(&r.Date, &r.Commentary, &r.Amount); err != nil {
 			return []domain.OutputReportUserTnx{}, err
 		}
-		fmt.Println(r)
 		reportData = append(reportData, r)
 	}
 
 	if len(reportData) == 0 {
-		fmt.Printf("No data for %+v", input)
 		return []domain.OutputReportUserTnx{}, nil
 	}
 

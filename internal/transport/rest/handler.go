@@ -22,11 +22,15 @@ type Users interface {
 	CheckUserByEmail(ctx context.Context, email string) (domain.User, error)
 	CheckWalletByUserID(ctx context.Context, uuid uuid.UUID) (domain.User, error)
 	CheckWalletByEmail(ctx context.Context, user string) (domain.User, error)
+
 	CreateWallet(ctx context.Context, input wallet.InputDeposit) (domain.User, error)
 	DepositWallet(ctx context.Context, input wallet.InputDeposit) (domain.User, error)
+
 	CheckAndDoTransfer(ctx context.Context, input wallet.InputTransferUsers) (domain.User, error)
 	BuyServiceUser(ctx context.Context, input wallet.InputBuyServiceUser) (wallet.OutPendingOrder, error)
 	ManageOrder(ctx context.Context, input wallet.InputOrderManager) (wallet.OutOrderManager, error)
+
+	ReportMonth(ctx context.Context, input wallet.InputReportMonth) ([]wallet.ReportMonth, error)
 	ReportForUser(ctx context.Context, input domain.InputReportUserTnx) ([]domain.OutputReportUserTnx, error)
 }
 
@@ -53,14 +57,14 @@ func (h *Handler) InitRouter() *echo.Echo {
 	walletRoutes := userRoutes.Group("/wallet")
 	walletRoutes.PUT("/deposit", h.DepositToUser)
 	// Когда-нибудь мы разрешим нашим пользователям выводить деньги, но не сегодня
-	// walletRoutes.PUT("/withdrawal", h.Update)
+	// walletRoutes.PUT("/withdrawal", h.Withdrawal)
 
 	orderRoutes := walletRoutes.Group("/order")
 	orderRoutes.PUT("/transfer", h.TransferUsers)
 	orderRoutes.POST("/buy", h.BuyServiceUser)
 	orderRoutes.POST("/approve", h.ManageOrder)
 	orderRoutes.POST("/decline", h.ManageOrder)
-	orderRoutes.POST("/report", h.ManageOrder)
+	orderRoutes.POST("/report", h.ReportMonth)
 
 	//router.Use(middleware.Logger())
 	//router.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
@@ -340,7 +344,7 @@ func (h *Handler) GetDataUser(ctx echo.Context) error {
 }
 
 func (h *Handler) ReportMonth(ctx echo.Context) error {
-	var input domain.InputReportUserTnx
+	var input wallet.InputReportMonth
 	if err := ctx.Bind(&input); err != nil {
 		log.WithFields(log.Fields{"handler": "ReportDataUser"}).Error(err)
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
@@ -353,18 +357,17 @@ func (h *Handler) ReportMonth(ctx echo.Context) error {
 			"message": err.Error(),
 		})
 	}
-	//
-	//report, err := h.usersService.ReportDataUser(ctx.Request().Context(), input)
-	//if err != nil {
-	//	log.WithFields(log.Fields{"handler": "ReportDataUser"}).Error(err)
-	//	return ctx.JSON(http.StatusInternalServerError, map[string]string{
-	//		"message": err.Error(),
-	//	})
-	//}
-	//
-	//return ctx.JSON(http.StatusOK, map[string]string{
-	//	"message": fmt.Sprintf("Report for %s", report.Email),
-	//	"report":  report.Report,
-	//})
-	return nil
+
+	report, err := h.usersService.ReportMonth(ctx.Request().Context(), input)
+	if err != nil {
+		log.WithFields(log.Fields{"handler": "ReportDataUser"}).Error(err)
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{
+			"message": err.Error(),
+		})
+	}
+
+	return ctx.JSON(http.StatusOK, map[string]any{
+		"message": fmt.Sprintf("Report for %v %v", input.Month, input.Year),
+		"report":  report,
+	})
 }

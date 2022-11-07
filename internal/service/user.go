@@ -18,7 +18,7 @@ type UsersRepository interface {
 	CheckAndDoTransfer(ctx context.Context, input wallet.InputTransferUsers) (domain.User, error)
 	BuyServiceUser(ctx context.Context, input wallet.InputBuyServiceUser) (wallet.OutPendingOrder, error)
 	ManageOrder(ctx context.Context, input wallet.InputOrderManager) (wallet.OutOrderManager, error)
-	ReportMonth(ctx context.Context, year, month int) error
+	ReportMonth(ctx context.Context, input wallet.InputReportMonth) ([]wallet.ReportMonth, error)
 	ReportForUser(ctx context.Context, input domain.InputReportUserTnx) ([]domain.OutputReportUserTnx, error)
 }
 
@@ -120,6 +120,14 @@ func (u *Users) ManageOrder(ctx context.Context, input wallet.InputOrderManager)
 
 func (u *Users) ReportForUser(ctx context.Context, input domain.InputReportUserTnx) ([]domain.OutputReportUserTnx, error) {
 	reportData, err := u.repo.ReportForUser(ctx, input)
+	if err != nil {
+		return reportData, err
+	}
+	return reportData, nil
+}
+
+func (u *Users) ReportMonth(ctx context.Context, input wallet.InputReportMonth) ([]wallet.ReportMonth, error) {
+	reportData, err := u.repo.ReportMonth(ctx, input)
 	if err != nil {
 		return reportData, err
 	}
