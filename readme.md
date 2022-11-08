@@ -3,14 +3,16 @@
 [Описание задания](https://github.com/avito-tech/internship_backend_2022)
 
 * Задача реализована с помощью фреймворка - Echo
-* Выполнялось основываясь на принципах Чистой архитектуры
+* Выполнялось основываясь на принципах Чистой архитектуры (handler->service->repository)
 * Database - PostgreSQL
 * Postman файл с примерами запросов включен в репозиторий
 * Конфигурационный env файл обрабатывается с помощью viper
 * Сгенерирована swagger документация
 * Для запуска используется docker-compose
 * Созданы файлы тестов и моков для controller уровня (transport) с использованием go:generate and mockery (TODO: покрыть repository).
+
 Покрытие тестами:
+
 ![img.png](misc_files/img_test.png)
 
 
@@ -32,37 +34,192 @@ _____________________________________________________________
 
 # Реализовано:
 
-1) Метод начисления средств на баланс.
-    - Принимает id пользователя / id кошелька / email и сколько средств зачислить.
-    - Возвращает message с email; balance.
-2) Метод получения баланса по id пользователя.
-    - Принимает id пользователя.
-    - Возвращает message с email; balance.
-3) Метод перевод средств от пользователя к пользователю.
-    - Принимает id пользователя, от которого переводятся средства; id пользователя, которому переводятся средства;
-      количество средст.
-    - Возвращает message.
-4) Метод резервирования средств с основного баланса на отдельном счете - реализован как метод оформления заказа на
-   покупку услуги.
-    - Принимает id пользователя, название услуги, сумму платежа.
-    - Возвращает message и order_id.
-5) Метод признания выручки - реализован как <br>
+1) Создание пользователя сервиса
+
+`POST /v1/user/`
+```json
+{
+   "firstName": "Kirill",
+   "lastName": "Kot",
+   "email": "kirill@gmail.com"
+}
+```
+response:
+```json
+{
+    "id": "893035fc-a9ef-4a9b-8b5d-51e899198013",
+    "firstName": "Kirill",
+    "lastName": "Kot",
+    "email": "kirill@gmail.com"
+}
+```
+2) Метод начисления средств на баланс.
+
+Возможно начисление по 1 из параметров - id_user, email, id_wallet
+
+`PUT /v1/user/wallet/deposit`
+```json
+{
+    "id_user": "893035fc-a9ef-4a9b-8b5d-51e899198013",
+    "amount": 555
+}
+```
+response:
+```json
+{
+    "message": "Deposited 555 to dd321dddsd@gmail.com. Balance: 555"
+}
+```
+
+3) Метод получения баланса по id пользователя.
+
+   `GET /v1/user/:id`
+id = 893035fc-a9ef-4a9b-8b5d-51e899198013
+
+response:
+```json
+{
+    "balance": "555",
+    "message": "Balance of kirill@gmail.com"
+}
+```
+
+4) Метод перевод средств от пользователя к пользователю.
+
+   `PUT /v1/user/wallet/transfer`
+```json
+{
+   "from_id": "893035fc-a9ef-4a9b-8b5d-51e899198013",
+   "to_id": "102b1ff4-d679-4511-8ef2-b8dc360a2b06",
+   "amount": 44
+}
+```
+response:
+```json
+{
+   "message": "Transfered 44 to eugene@gmail.com"
+}
+```
+5) Метод резервирования средств с основного баланса на отдельном счете:
+
+Реализован как Метод оформления заказа напокупку услуги.
+
+   `POST /v1/user/wallet/order/buy`
+```json
+{
+   "id_user": "893035fc-a9ef-4a9b-8b5d-51e899198013",
+   "service_name": "Dodo Pizza",
+   "cost": 22
+}
+```
+response:
+```json
+{
+   "message": "Created order for Dodo Pizza for 22",
+   "order_id": "7fe842c5-94c8-4bb0-92bd-3f881cac4f34"
+}
+```
+
+6) Метод признания выручки - реализован как <br>
    5.1) метод подтверждения заказа на покупку услуги <br>
+
+   `POST /v1/user/wallet/order/approve`
+```json
+{
+   "id_user": "893035fc-a9ef-4a9b-8b5d-51e899198013",
+   "id_order": "7fe842c5-94c8-4bb0-92bd-3f881cac4f34"
+}
+```
+response:
+```json
+{
+   "message": "Order completed"
+}
+```
    5.2) отклонения заказа (и возвращение средств на основной баланс кошелька пользователя - разрезервирование средств
    пользователя).
-    - Принимает user_id, order_id.
-    - Возвращает message.
+
+   `POST /v1/user/wallet/order/decline`
+```json
+{
+   "id_user": "893035fc-a9ef-4a9b-8b5d-51e899198013",
+   "id_order": "076c3ebd-820e-4f33-8bbf-d63af28d8174"
+}
+```
+response:
+```json
+{
+   "message": "Order completed"
+}
+```
+
 
 Дополнительные задания:
 
 1) Метод получения отчета для бухгалетрии.
-    - Принимает цифру месяца и года.
-    - Возвращает message с месяцем и годом; report: array с операциями с суммами по каждому сервису.
-    - TODO: Реализовать выдачу csv-файла в виде ссылки (s3)
+ 
+В учет берется только успешно завершенные заказы (подтвержденные) с комментариям "income...".
+
+   `POST /v1/user/wallet/order/report`
+```json
+{
+   "year": 2022,
+   "month": 11
+}
+```
+response:
+```json
+{
+   "message": "Report for 11 2022",
+   "report": [
+      {
+         "Amount": 44,
+         "Text": "income from Dodo Pizza"
+      },
+      {
+         "Amount": 245,
+         "Text": "income from Yandex Taxi"
+      }
+   ]
+}
+```
+   - TODO: Реализовать выдачу csv-файла в виде ссылки (s3)
+
 2) Реализован метод получения списка транзакций пользователя по его id
-    - Принимает id пользователя, limit, offset (параметры для пагинации), sort_field(по какому полю сортируем), order(
-      порядок сортировки - ASC / DESC).
-    - Возвращает message с user id и report со списком транзакций пользователя согласно критериям.
+
+   `POST /v1/user/data`
+```json
+{
+   "user_id": "afda1a6f-01bc-46a8-97d1-39efd0a72c2d",
+   "limit": 3,
+   "offset": 2,
+   "order": "DESC",
+   "sort_field": "amount"
+}
+```
+response:
+```json
+{
+   "message": "Report for afda1a6f-01bc-46a8-97d1-39efd0a72c2d",
+   "report": [
+      {
+         "Date": "2022-11-06T20:26:04.072342Z",
+         "Commentary": "Deposit",
+         "Amount": 56111
+      },
+      {
+         "Date": "2022-11-06T20:25:25.191993Z",
+         "Commentary": "Deposit",
+         "Amount": 5611
+      },
+      {
+         "Date": "2022-11-06T14:38:45.846102Z",
+         "Commentary": "Deposit",
+         "Amount": 777
+      }
+   ]
+}
+```
 
 # SWAGGER
 
@@ -74,7 +231,7 @@ Swagger docs
 Пример реализации
 ![img.png](misc_files/img.png)
 
-# Вопросы:
+# Вопросы и решения:
 
 1) По умолчанию сервис не содержит в себе никаких данных о балансах (пустая табличка в БД). Данные о балансе появляются
    при первом зачислении денег.
