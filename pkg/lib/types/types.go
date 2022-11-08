@@ -18,6 +18,7 @@ var (
 	ErrBusy                = errors.New("resource is busy")
 	ErrUnauthorized        = errors.New("unauthorized")
 	ErrAlreadyExists       = errors.New("already exists")
+	ErrorInternal          = errors.New("internal error")
 	ErrNotEnoughData       = errors.New("not enough user data provided")
 	ErrTooMuchData         = errors.New("too much user data provided, " +
 		"only one of the following is allowed: wallet, user_id, email")

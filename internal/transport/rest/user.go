@@ -50,7 +50,7 @@ func (h *Handler) Create(ctx echo.Context) error {
 			})
 		default:
 			return ctx.JSON(http.StatusInternalServerError, map[string]string{
-				"message": "could not create user" + err.Error(),
+				"message": "could not create user: " + err.Error(),
 			})
 		}
 	}
@@ -70,8 +70,6 @@ func (h *Handler) GetUserBalance(ctx echo.Context) error {
 	var user domain.User
 	var err error
 	user.ID, err = uuid.Parse(ctx.Param("id"))
-	log.Println(user.ID)
-	log.Println(ctx.Request().RequestURI)
 	if err != nil {
 		log.WithFields(log.Fields{"handler": "GetUserBalance"}).Error(err)
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
@@ -88,7 +86,6 @@ func (h *Handler) GetUserBalance(ctx echo.Context) error {
 			"message": "could not get user balance " + err.Error(),
 		})
 	}
-
 	return ctx.JSON(http.StatusOK, map[string]string{
 		"message": fmt.Sprintf("Balance of %s", user.Email),
 		"balance": fmt.Sprintf("%v", user.Wallet.Balance),

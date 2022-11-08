@@ -58,13 +58,13 @@ func (h *Handler) BuyServiceUser(ctx echo.Context) error {
 func (h *Handler) ManageOrder(ctx echo.Context) error {
 	var input wallet.InputOrderManager
 	if err := ctx.Bind(&input); err != nil {
-		log.WithFields(log.Fields{"handler": "ApproveOrder"}).Error(err)
+		log.WithFields(log.Fields{"handler": "ManageOrder"}).Error(err)
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
 			"message": err.Error(),
 		})
 	}
 	if err := ctx.Validate(&input); err != nil {
-		log.WithFields(log.Fields{"handler": "ApproveOrder"}).Error(err)
+		log.WithFields(log.Fields{"handler": "ManageOrder"}).Error(err)
 		return ctx.JSON(http.StatusUnprocessableEntity, map[string]string{
 			"message": err.Error(),
 		})
@@ -78,7 +78,7 @@ func (h *Handler) ManageOrder(ctx echo.Context) error {
 	}
 	outOrder, err := h.usersService.ManageOrder(ctx.Request().Context(), input)
 	if err != nil {
-		log.WithFields(log.Fields{"handler": "ApproveOrder"}).Error(err)
+		log.WithFields(log.Fields{"handler": "ManageOrder"}).Error(err)
 		return ctx.JSON(http.StatusInternalServerError, map[string]string{
 			"message": err.Error(),
 		})
