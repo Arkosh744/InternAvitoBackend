@@ -339,55 +339,6 @@
 					"response": []
 				}
 			]
-		},
-		{
-			"name": "File",
-			"item": [
-				{
-					"name": "upload",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{auth}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "formdata",
-							"formdata": [
-								{
-									"key": "file",
-									"contentType": "",
-									"type": "file",
-									"src": "/E:/Downloads/gopher (1).png"
-								},
-								{
-									"key": "json",
-									"value": "{\"name\": \"bobki\"}",
-									"contentType": "application/json",
-									"type": "text"
-								}
-							]
-						},
-						"url": {
-							"raw": "{{host}}/file",
-							"host": [
-								"{{host}}"
-							],
-							"path": [
-								"file"
-							]
-						}
-					},
-					"response": []
-				}
-			]
 		}
 	],
 	"variable": [

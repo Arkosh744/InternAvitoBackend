@@ -131,7 +131,6 @@ func (h *Handler) TransferUsers(ctx echo.Context) error {
 		})
 	}
 
-	fmt.Println(input)
 	return ctx.JSON(http.StatusOK, map[string]string{
 		"message": fmt.Sprintf("Transfered %v to %s", input.Amount, toUser.Email),
 	})

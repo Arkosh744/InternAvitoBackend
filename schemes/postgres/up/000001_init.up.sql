@@ -103,12 +103,3 @@ INSERT INTO services (name, vendor_wallet)
 VALUES ('Dodo Pizza', '1490b303-5e0e-476a-806c-7139a201c446'),
        ('Yandex Taxi', '74231c9d-ede1-4e03-9b77-2133316b1771'),
        ('Yandex Food', 'aece5045-47ff-4ae5-99e6-9dd4bc4559cb');
-
-CREATE TABLE IF NOT EXISTS income_reports
-(
-    id         uuid PRIMARY KEY NOT NULL,
-    service    varchar(255)     NOT NULL,
-    amount     numeric          NOT NULL,
-    created_at timestamp        NOT NULL DEFAULT NOW(),
-    updated_at timestamp        NOT NULL DEFAULT NOW()
-);
