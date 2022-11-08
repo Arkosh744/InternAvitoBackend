@@ -5,11 +5,14 @@
 * Задача реализована с помощью фреймворка - Echo
 * Выполнялось основываясь на принципах Чистой архитектуры
 * Database - PostgreSQL
-* Созданы файлы тестов и моков для controller уровня (transport) с использованием go:generate and mockery
 * Postman файл с примерами запросов включен в репозиторий
 * Конфигурационный env файл обрабатывается с помощью viper
 * Сгенерирована swagger документация
 * Для запуска используется docker-compose
+* Созданы файлы тестов и моков для controller уровня (transport) с использованием go:generate and mockery (TODO: покрыть repository).
+Покрытие тестами:
+![img.png](misc_files/img_test.png)
+
 
 ### Запуск
 
