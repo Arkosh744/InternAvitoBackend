@@ -1,5 +1,6 @@
 # Тестовое задание на стажировку Avito Tech Golang Backend Developer
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/Arkosh744/InternAvitoBackend)
+<img align="right" src="misc_files/jobs.svg" alt="Gopher">
 
 [Описание задания](https://github.com/avito-tech/internship_backend_2022)
 
@@ -188,6 +189,8 @@ response:
    - TODO: Реализовать выдачу csv-файла в виде ссылки (s3)
 _____________________________________________________________
 2) Реализован метод получения списка транзакций пользователя по его id
+
+Параметры сортировки и пагинации указываются в запросе
 
    `POST /v1/user/data`
 ```json
