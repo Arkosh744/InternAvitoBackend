@@ -12,6 +12,8 @@ import (
 	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
+//go:generate mockgen -source=handler.go -destination=mocks/mocks.go -package=mocks_handler
+
 type Users interface {
 	Create(ctx context.Context, user domain.InputUser) (domain.User, error)
 	GetUserBalance(ctx context.Context, user domain.User) (domain.User, error)
