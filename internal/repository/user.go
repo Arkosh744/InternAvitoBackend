@@ -173,9 +173,14 @@ func (u *Users) CheckAndDoTransfer(ctx context.Context, input wallet.InputTransf
 	err = txn.QueryRowContext(ctx,
 		"UPDATE wallets SET balance=wallets.balance+$1 WHERE id=$2 RETURNING balance",
 		input.Amount, toUser.Wallet.ID).Scan(&toUser.Wallet.Balance)
-
+	if err != nil {
+		return toUser, err
+	}
 	_, err = txn.ExecContext(ctx, "INSERT INTO transactions (wallet_id, amount, status, commentary) values ($1, $2, $3, $4)",
 		fromUser.Wallet.ID, -input.Amount, "approved", "payment send to user")
+	if err != nil {
+		return toUser, err
+	}
 	_, err = txn.ExecContext(ctx, "INSERT INTO transactions (wallet_id, amount, status, commentary) values ($1, $2, $3, $4)",
 		toUser.Wallet.ID, input.Amount, "approved", "payment received from user")
 	if err != nil {
@@ -213,7 +218,9 @@ func (u *Users) BuyServiceUser(ctx context.Context, input wallet.InputBuyService
 	}
 	err = txn.QueryRowContext(ctx, "INSERT INTO transactions (wallet_id, amount, status, commentary) VALUES ($1, $2, $3, $4) RETURNING id",
 		user.Wallet.ID, -input.Cost, "pending", fmt.Sprintf("payment for %s", input.ServiceName)).Scan(&order.Txn)
-
+	if err != nil {
+		return order, err
+	}
 	err = txn.QueryRowContext(ctx,
 		"INSERT INTO orders (user_id, service, price, status, transaction_id) VALUES ($1, $2, $3, $4, $5) RETURNING id, status",
 		input.IDUser, input.ServiceName, input.Cost, "created", order.Txn).Scan(&order.ID, &order.Status)
@@ -336,7 +343,7 @@ func (u *Users) ReportMonth(ctx context.Context, input wallet.InputReportMonth) 
 		reportData = append(reportData, r)
 	}
 	if len(reportData) == 0 {
-		return reportData, errors.New(fmt.Sprintf("No data for %s %s", input.Month, input.Year))
+		return reportData, errors.New(fmt.Sprintf("No data for %v %v", input.Month, input.Year))
 	}
 
 	return reportData, nil

@@ -46,9 +46,15 @@ func Error(err error, ctx echo.Context) {
 	errObj.Name = http.StatusText(errObj.Code)
 	if !ctx.Response().Committed {
 		if ctx.Request().Method == echo.HEAD {
-			ctx.NoContent(errObj.Code)
+			err := ctx.NoContent(errObj.Code)
+			if err != nil {
+				return
+			}
 		} else {
-			ctx.JSON(errObj.Code, errObj)
+			err := ctx.JSON(errObj.Code, errObj)
+			if err != nil {
+				return
+			}
 		}
 	}
 }

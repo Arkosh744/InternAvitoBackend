@@ -25,7 +25,7 @@
 										"header": [],
 										"body": {
 											"mode": "raw",
-											"raw": "{\r\n    \"id_user\": \"afda1a6f-01bc-46a8-97d1-39efd0a72c2d\",\r\n    \"service_name\": \"Dodo Pizza\",\r\n    \"cost\": 22\r\n}",
+											"raw": "{\r\n    \"id_user\": \"893035fc-a9ef-4a9b-8b5d-51e899198013\",\r\n    \"service_name\": \"Dodo Pizza\",\r\n    \"cost\": 22\r\n}",
 											"options": {
 												"raw": {
 													"language": "json"
@@ -58,7 +58,7 @@
 										"header": [],
 										"body": {
 											"mode": "raw",
-											"raw": "{\r\n    \"id_user\": \"41e62032-b025-4877-bf38-008652c04afa\",\r\n    \"id_order\": \"b50c05e2-977c-40c5-a941-67f415db3577\"\r\n}",
+											"raw": "{\r\n    \"id_user\": \"afda1a6f-01bc-46a8-97d1-39efd0a72c2d\",\r\n    \"id_order\": \"7fe842c5-94c8-4bb0-92bd-3f881cac4f34\"\r\n}",
 											"options": {
 												"raw": {
 													"language": "json"
@@ -124,7 +124,7 @@
 										"header": [],
 										"body": {
 											"mode": "raw",
-											"raw": "{\r\n    \"id_user\": \"41e62032-b025-4877-bf38-008652c04afa\",\r\n    \"id_order\": \"e688da1f-0f68-45f1-91a8-7a2533bf928e\"\r\n}",
+											"raw": "{\r\n    \"id_user\": \"893035fc-a9ef-4a9b-8b5d-51e899198013\",\r\n    \"id_order\": \"076c3ebd-820e-4f33-8bbf-d63af28d8174\"\r\n}",
 											"options": {
 												"raw": {
 													"language": "json"
@@ -159,7 +159,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n    \"id_user\": \"41e62032-b025-4877-bf38-008652c04afa\",\r\n    \"amount\": 555\r\n}",
+									"raw": "{\r\n    \"id_user\": \"893035fc-a9ef-4a9b-8b5d-51e899198013\",\r\n    \"amount\": 555\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -191,7 +191,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n    \"from_id\": \"6297e304-133a-4c03-9405-6c6f955f5b5a\",\r\n    \"to_id\": \"1a21ad5a-8452-4673-b63f-1109b0c491cf\",\r\n    \"amount\": 44\r\n}",
+									"raw": "{\r\n    \"from_id\": \"893035fc-a9ef-4a9b-8b5d-51e899198013\",\r\n    \"to_id\": \"102b1ff4-d679-4511-8ef2-b8dc360a2b06\",\r\n    \"amount\": 44\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -257,7 +257,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"firstName\": \"Kirill\",\r\n    \"lastName\": \"Kot\",\r\n    \"email\": \"ssad2@gmail.com\"\r\n}",
+							"raw": "{\r\n    \"firstName\": \"Kirill\",\r\n    \"lastName\": \"Kot\",\r\n    \"email\": \"dd321ddddsd@gmail.com\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -288,7 +288,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"user_id\": \"afda1a6f-01bc-46a8-97d1-39efd0a72c2d\",\r\n    \"limit\": 225,\r\n    \"offset\": 0,\r\n    \"order\": \"DESC\",\r\n    \"sort_field\": \"amount\"\r\n}",
+							"raw": "{\r\n    \"user_id\": \"afda1a6f-01bc-46a8-97d1-39efd0a72c2d\",\r\n    \"limit\": 3,\r\n    \"offset\": 0,\r\n    \"order\": \"DESC\",\r\n    \"sort_field\": \"amount\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -325,14 +325,14 @@
 							"raw": "{\r\n    \"id\": 4,\r\n    \"title\": \"heill\",\r\n    \"body\": \"asd text here\"\r\n}"
 						},
 						"url": {
-							"raw": "{{host}}/v1/user/1a21ad5a-8452-4673-b63f-1109b0c491cf",
+							"raw": "{{host}}/v1/user/893035fc-a9ef-4a9b-8b5d-51e899198013",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"v1",
 								"user",
-								"1a21ad5a-8452-4673-b63f-1109b0c491cf"
+								"893035fc-a9ef-4a9b-8b5d-51e899198013"
 							]
 						}
 					},
